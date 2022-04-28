@@ -9,7 +9,8 @@
 #define PORT 0x378
 
 // TODO: Find a better way
-bArray<int> GetSeparatedPins(int n) {
+bArray<int> GetSeparatedPins() {
+    unsigned int n = inb(PORT);
     bArray<int> result;
     std::string bits = std::bitset<8>(n).to_string();
 
@@ -23,8 +24,8 @@ bArray<int> GetSeparatedPins(int n) {
 
 void WriteData() {
     unsigned int data = inb(PORT);
-    std::ofstream file("/etc/");
-    file << std::hex << data;
+    std::ofstream file("/etc/pport.data");
+    file << data;
     file.close();
 }
 
@@ -70,15 +71,20 @@ int main(int argc, char** argv) {
     }
 
     if (args.has("--status")) {
-        bArray<int> high = GetSeparatedPins(inb(PORT));
+        bArray<int> high = GetSeparatedPins();
         for (short i = 2; i < 9; i++) {
-            std::cout << i << ": " << (high.Has(i) ? "true" : "false") << std::endl;
+            std::cout << i << ": " << (high.Has(i) ? "high" : "low") << std::endl;
         }
         return EXIT_SUCCESS;
     }
 
     if (args.has("reboot")) {
-        
+        std::ifstream file("/etc/pport.data");
+        std::string data;
+        file >> data;
+        outb(std::stoi(data), PORT);
+
+        return EXIT_SUCCESS;
     }
 
     if (args.has("-on")) {
@@ -103,9 +109,7 @@ int main(int argc, char** argv) {
     if (args.has("-t")) {
         int i = args.indexOf("-s");
         int pin = args[i + 1].ToInt();
-        // TODO: Finish this
+        bArray<int> high = GetSeparatedPins();
+        SetPin(pin, !high.Has(pin));
     }
-
-
 }
-
