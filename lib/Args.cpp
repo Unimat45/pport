@@ -20,6 +20,10 @@ int Args::indexOf(std::string arg) {
 	return -1;
 }
 
+size_t Args::count() {
+	return this->argv.size();
+}
+
 Arg Args::operator[](int i) {
 	return this->argv[i];
 }
