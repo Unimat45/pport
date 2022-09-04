@@ -12,6 +12,9 @@ set(TARGET_SRC
 	src/Arg.cpp
 	src/Args.cpp
 	src/main.cpp
+	src/Client.cpp
 )
 
 add_executable(pport ${TARGET_SRC})
+
+target_link_libraries(pport ${CMAKE_SOURCE_DIR}/lib/libjsoncpp.a)
