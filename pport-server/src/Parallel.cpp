@@ -76,9 +76,7 @@ void Parallel::WriteToFile() {
 
     f.close();
 
-    // outb(file["value"].asInt(), PORT);
-
-    std::cout << file["value"].asInt() << std::endl;
+    outb(file["value"].asInt(), PORT);
 }
 
 void Parallel::loadFromFile() {
