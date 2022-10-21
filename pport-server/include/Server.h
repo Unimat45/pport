@@ -1,6 +1,4 @@
-#include <sys/socket.h>
 #include <netinet/in.h>
-
 #include "Handler.h"
 
 class Server {

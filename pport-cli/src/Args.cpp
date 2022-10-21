@@ -2,7 +2,7 @@
 
 Args::Args(int argc, char** argv) {
 	for (int i = 1; i < argc; i++) {
-		this->argv.push(Arg(argv[i]));
+		this->argv.push_back(Arg(argv[i]));
 	}
 }
 
@@ -14,7 +14,7 @@ bool Args::has(std::string arg) {
 }
 
 int Args::indexOf(std::string arg) {
-	for (int i = 0; i < this->argv.size(); i++) {
+	for (int i = 0; i < (int)this->argv.size(); i++) {
 		if (this->argv[i] == arg) return i;
 	}
 	return -1;

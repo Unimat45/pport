@@ -1,129 +1,140 @@
 #include "Command.h"
 
-#include <fstream>
-#include <sys/io.h>
-#include <unistd.h>
+#include <regex>
 
-#include <iostream>
+#define NO_PIN -1
+#define ALL_PINS 0xFF
 
-#define PORT 0x378
+#define DEFAULT_LABEL(pin) "Pin " + std::to_string(pin)
+
+const std::regex RE_CMD("^(SET|SHOW(?:STR)?|REBOOT|TOGGLE)(?: (?:PIN ([2-9]|ALL))(?: (LABEL|HIGH|LOW) ?)?(\\w+)?)?$", std::regex_constants::icase);
 
 Command::Command(std::string cmd) {
-	std::smatch match;
-	this->cmd = ToUpper(cmd);
-	if (std::regex_search(this->cmd, match, RE_CMD)) {
-		this->ints = match[1].str();
-		this->pin = match[2].str() != "" ? match[2].str() == "ALL" ? 0xFF : std::stoi(match[2].str()) : 0;
-		this->state = match[3].str() != "" && match[3].str() == "HIGH";
-	}
-	else {
-		throw std::runtime_error("Invalid Command");
-	}
-}
+    this->cmd = cmd;
+    
+    std::smatch match;
 
-unsigned int Command::Read() {
-	return inb(PORT);
-}
-
-void Command::Write(int pin, bool state) {
-	pin -= 2;
-	unsigned int d;
-
-    if (state) {
-        d = 1 << pin;
-        outb(inb(PORT) | d, PORT);
-    }
-    else {
-        d = 0xFF - (1 << pin);
-        outb(inb(PORT) & d, PORT);
+    if (!std::regex_search(this->cmd, match, RE_CMD)) {
+        throw std::runtime_error("ERROR: There is an error in your syntax");
     }
 
-	std::ofstream f("/etc/pport.state");
+    this->inst = toUpper(match[1].str()); // Sets instruction
 
-	f << std::hex << this->Read();
 
-	f.close();
+    this->pin = match[2].str() != "" ? ( toUpper(match[2].str()) == "ALL" ? ALL_PINS : std::stoi(match[2].str()) ) : NO_PIN;
+
+    if (toUpper(match[3].str()) == "LABEL") {
+        this->inst = "LABEL";
+    }
+
+    this->state = match[3].str() != "" && toUpper(match[3].str()) == "HIGH";
+
+    this->label = toUpper(match[4].str()) == "DEFAULT" ? DEFAULT_LABEL(this->pin) : match[4].str();
 }
 
-void Command::Write(int data) {
+std::string Command::Execute() {
+    if (this->inst == "SET") {
 
-	outb(data, PORT);
+        // If PIN is ALL
+        if (this->pin == ALL_PINS) {
+            for (size_t i = 0; i < PORT_SIZE; i++) {
+                Pin* p = parallel[i + 2];
 
-	std::ofstream f("/etc/pport.state");
+                p->SetState(this->state);
+            }
 
-	f << std::hex << this->Read();
+            parallel.WriteToFile();
 
-	f.close();
-}
+            return parallel.ToJSONStr();
+        }
+        
+        Pin* p = parallel[this->pin];
 
-std::string Command::FmtRead() {
-	std::string result("[");
-	unsigned int data = this->Read();
+        p->SetState(this->state);
 
-	for (size_t i = 0; i < 8; i++) {
-		size_t d = 1 << i;
-		if (d == 256) d--;
+        parallel.WriteToFile();
 
-		if (i != 0) result.push_back(',');
+        return p->ToJSONStr();
+    }
 
-		result += this->FmtPin(i + 2, data);
-	}
+    else if (this->inst == "SHOW") {
+        // If only SHOW or SHOW ALL
+        if (this->pin == NO_PIN || this->pin == ALL_PINS) {
+            return parallel.ToJSONStr();
+        }
 
-	result.push_back(']');
+        Pin* p = parallel[this->pin];
 
-	return result;
-}
+        return p->ToJSONStr();
+    }
 
-std::string Command::FmtPin(int pin, unsigned int data) {
-	if (data == static_cast<unsigned int>(EOF)) {
-		data = this->Read();
-	}
-	size_t d = 1 << (pin - 2);
+    else if(this->inst == "SHOWSTR") {
+        // If only SHOW or SHOW ALL
+        if (this->pin == NO_PIN || this->pin == ALL_PINS) {
+            return parallel.ToString();
+        }
 
-	return "{\"pin\":" + std::to_string(pin) + ",\"state\":" + ((data & d) == d ? "true" : "false") + '}';
-}
+        Pin* p = parallel[this->pin];
 
-std::string Command::execute() {
-	if (this->ints == "SHOW") {
-		if (this->pin != 0) {
-			return this->FmtPin(pin);
-		}
-		return this->FmtRead();
-	}
-	else if (this->ints == "SET") {
-		if (this->pin == 0xFF) {
-			this->Write(this->state ? 0xFF : 0);
-			return this->cmd;
-		}
-		this->Write(this->pin, this->state);
-		return this->cmd;
-	}
-	else if (this->ints == "REBOOT") {
-		std::string s;
-		std::ifstream f("/etc/pport.state");
+        return p->ToString();
+    }
+    
+    else if (this->inst == "TOGGLE") {
 
-		getline(f, s);
+        // If PIN is ALL
+        if (this->pin == ALL_PINS) {
+            for (size_t i = 0; i < PORT_SIZE; i++) {
+                Pin* p = parallel[i + 2];
 
-		f.close();
+                p->ToggleState();
+            }
 
-		this->Write(std::stoi(s, 0, 16));
+            parallel.WriteToFile();
 
-		return "";
-	}
+            return parallel.ToJSONStr();
+        }
+        
+        Pin* p = parallel[this->pin];
 
-	throw std::runtime_error("Error executing this command");
-}
+        p->ToggleState();
 
-std::string Command::ToUpper(std::string s) {
-	std::string result("");
+        parallel.WriteToFile();
 
-	for (size_t i = 0; i < s.size(); i++) {
-		if (s[i] >= 'a' && s[i] <= 'z')
-			result.push_back(s[i] ^ 0x20);
-		else {
-			result.push_back(s[i]);
-		}
-	}
+        return p->ToJSONStr();
+    }
 
-	return result;
+    else if (this->inst == "LABEL") {
+        // If no pin specified, throw error
+        if (this->pin == NO_PIN) throw std::runtime_error("ERROR: No pin was set for the label (Needed: ALL or pin number)");
+
+        // If ALL pins specified
+        else if (this->pin == ALL_PINS) {
+            
+            for (size_t i = 0; i < PORT_SIZE; i++) {
+                Pin* p = parallel[i + 2];
+
+                p->SetLabel(this->label);
+            }
+
+            parallel.WriteToFile();
+
+            return parallel.ToJSONStr();
+        }
+        
+        Pin* p = parallel[this->pin];
+
+        p->SetLabel(this->label);
+
+        parallel.WriteToFile();
+
+        return p->ToJSONStr();
+    }
+    
+    else if (this->inst == "REBOOT") {
+        parallel = Parallel(); // Reset from file
+
+        return parallel.ToJSONStr();
+    }
+
+    throw std::runtime_error("ERROR: There is an error in the instruction");
 }

@@ -1,5 +1,4 @@
 #include "Arg.hpp"
-#include <iostream>
 #include <cmath>
 
 Arg::Arg() {
@@ -83,7 +82,7 @@ bool Arg::operator!=(std::string arg2) {
 	return this->arg != arg2;
 }
 
-std::ostream& Arg::operator<<(std::ostream os)
+std::ostream& Arg::operator<<(std::ostream& os)
 {
 	os << this->arg;
 	return os;

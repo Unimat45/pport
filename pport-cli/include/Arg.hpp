@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>
+#include <iostream>
 
 class Arg {
 
@@ -23,5 +23,5 @@ public:
 
 	bool operator==(std::string arg2);
 	bool operator!=(std::string arg2);
-	std::ostream& operator<<(std::ostream os);
+	std::ostream& operator<<(std::ostream& os);
 };

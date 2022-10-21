@@ -1,15 +1,19 @@
-#include <iostream>
-#include <sstream>
-
 #include "json/json.h"
 
 #include "Args.hpp"
 #include "Client.hpp"
 
 #define PORT 5663
+#define ADDRESS "10.0.0.106"
+
+std::string SET_PIN(int pin, bool state) {
+    std::stringstream ss("SET PIN ");
+    ss << pin << ' ' << (state ? "HIGH" : "LOW");
+    return ss.str();
+}
 
 std::string TCPSend(std::string msg) {
-    Client client("10.0.0.106", PORT);
+    Client client(ADDRESS, PORT);
 
     client.Write(msg);
 
@@ -38,71 +42,80 @@ int main(int argc, char** argv) {
         << "Available states are: true, false, 1, 0, high, low"
         << std::endl;
 
-        return (EXIT_FAILURE);
+        return EXIT_SUCCESS;
     }
 
     if (args.has("--status")) {
 
-        Json::Value root;
-        std::stringstream ss(TCPSend("SHOW"));
+        std::cout << TCPSend("SHOWSTR") << std::flush;
 
-        ss >> root;
-
-        for (size_t i = 0; i < root.size(); i++) {
-            Json::Value current = root[(int)i];
-
-            std::cout << "pin " << current["pin"] << ": " << (current["state"].asBool() ? "on" : "off") << std::endl;
-        }
-
-        return (EXIT_SUCCESS);
+        return EXIT_SUCCESS;
     }
 
     if (args.has("reboot")) {
 
         TCPSend("REBOOT");
 
-        return (EXIT_SUCCESS);
+        return EXIT_SUCCESS;
     }
 
     if (args.has("-on")) {
         int i = args.indexOf("-on");
+
         if (!args[i + 1].isInt()) {
             std::cerr << "-on: The pin number is invalid" << std::endl;
-            return (EXIT_FAILURE);
+            return EXIT_FAILURE;
         }
 
-        TCPSend("SET PIN " + args[i + 1].ToString() + " HIGH");
+        std::string data = TCPSend(SET_PIN(args[i + 1].ToInt(), true));
 
-        return (EXIT_SUCCESS);
+        if (data.starts_with("ERROR")) {
+            std::cerr << data << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        return EXIT_SUCCESS;
     }
 
     if (args.has("-off")) {
         int i = args.indexOf("-off");
+
         if (!args[i + 1].isInt()) {
             std::cerr << "-off: The pin number is invalid" << std::endl;
-            return (EXIT_FAILURE);
+            return EXIT_FAILURE;
         }
 
-        TCPSend("SET PIN " + args[i + 1].ToString() + " LOW");
+        std::string data = TCPSend(SET_PIN(args[i + 1].ToInt(), false));
 
-        return (EXIT_SUCCESS);
+        if (data.starts_with("ERROR")) {
+            std::cerr << data << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        return EXIT_SUCCESS;
     }
 
     if (args.has("-s")) {
         int i = args.indexOf("-s");
+
         if (!args[i + 1].isInt()) {
             std::cerr << "-s: The pin number is invalid" << std::endl;
-            return (EXIT_FAILURE);
+            return EXIT_FAILURE;
         }
-        int pin = args[i + 1].ToInt();
+
         if (!args[i + 2].isBool() && args[i + 2] != "high" && args[i + 1] != "low") {
             std::cerr << "-s: The state is invalid" << std::endl;
-            return (EXIT_FAILURE);
+            return EXIT_FAILURE;
         }
 
-        TCPSend("SET PIN " + args[i + 1].ToString() + ' ' + (args[i + 2].ToBool() ? "HIGH" : "LOW"));
+        std::string data = TCPSend(SET_PIN(args[i + 1].ToInt(), args[i + 2].ToBool()));
 
-        return (EXIT_SUCCESS);
+        if (data.starts_with("ERROR")) {
+            std::cerr << data << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        return EXIT_SUCCESS;
 
     }
 
@@ -111,21 +124,36 @@ int main(int argc, char** argv) {
         
         if (!args[i + 1].isInt()) {
             std::cerr << "-t: The pin number is invalid" << std::endl;
-            return (EXIT_FAILURE);
+            return EXIT_FAILURE;
         }
 
-        int pin = args[i + 1].ToInt();
-        std::string str_pin = args[i + 1].ToString();
+        std::string data = TCPSend( "TOGGLE PIN " + args[i + 1].ToString() );
 
-        std::stringstream pin_data( TCPSend("SHOW PIN " + str_pin) );
+        if (data.starts_with("ERROR")) {
+            std::cerr << data << std::endl;
+            return EXIT_FAILURE;
+        }
+    }
 
-        Json::Value root;
+    if (args.has("--label")) {
+        int i = args.indexOf("--label");
 
-        pin_data >> root;
+        if (!args[i + 1].isInt()) {
+            std::cerr << "--label: The pin number is invalid" << std::endl;
+            return EXIT_FAILURE; 
+        }
 
-        std::string newState = root["state"].asBool() ? "LOW" : "HIGH";
+        std::string pin = args[i + 1].ToString();
+        std::string label = args[i + 2].ToString();
 
-        TCPSend("SET PIN " + str_pin + ' ' + newState);
+        std::string data = TCPSend("SET PIN " + pin + " LABEL " + label);
+
+        if (data.starts_with("ERROR")) {
+            std::cerr << data << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        std::cout << label << ": " << pin << std::endl;
     }
 
     return EXIT_SUCCESS;

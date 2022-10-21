@@ -1,7 +1,3 @@
-#include <unistd.h>
-#include <iostream>
-#include <thread>
-
 #include "Command.h"
 
 class Handler {

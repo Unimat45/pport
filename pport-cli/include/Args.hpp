@@ -1,13 +1,12 @@
 #pragma once
 
-#include <string>
+#include <vector>
 #include "Arg.hpp"
-#include "bArray.hpp"
 
 class Args {
 
 private:
-	bArray<Arg> argv;
+	std::vector<Arg> argv;
 
 public:
 	Args(int agrc, char** argv);

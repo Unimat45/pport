@@ -1,5 +1,8 @@
 #include "Server.h"
 
+#include <thread>
+#include <iostream>
+
 Server::Server(int port) {
 	this->port = port;
 }
@@ -40,7 +43,7 @@ void Server::StopServer() {
 void Server::Run() {
 	bool running = true;
 
-	std::cout << "Server started" << std::endl;
+	std::cout << "Server started on " << this->port << std::endl;
 
 	while ( running ) {
 		int socket = accept(server_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
@@ -51,9 +54,9 @@ void Server::Run() {
 
 		std::cout << "Received Connection: ";
 
-		Handler* handler = new Handler(socket);
+		Handler handler = Handler(socket);
 
-		handler->start();
+		handler.start();
 	}
 
 	shutdown(server_fd, SHUT_RDWR);
