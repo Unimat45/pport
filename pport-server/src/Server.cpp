@@ -1,38 +1,32 @@
 #include "Server.h"
 
 #include <thread>
-#include <iostream>
+#include <string>
+
+#define MAX_BUF 1024
 
 Server::Server(int port) {
 	this->port = port;
 }
 
 void Server::StartServer() {
-	int opt = 1;
-	server_fd = socket(AF_INET, SOCK_STREAM, 0);
+	server_fd = socket(AF_INET, SOCK_DGRAM, 0);
 
-	if (server_fd == 0) {
+	if (server_fd < 0) {
 		throw std::runtime_error("server_fd");
 	}
 
-	if ( setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) ) {
-		throw std::runtime_error("setsocketopt");
-	}
+	memset(&serv_addr, 0, sizeof(serv_addr));
+	memset(&client_addr, 0, sizeof(client_addr));
 
-	address.sin_family = AF_INET;
-	address.sin_addr.s_addr = INADDR_ANY;
-	address.sin_port = htons(this->port);
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_addr.s_addr = INADDR_ANY;
+	serv_addr.sin_port = htons(this->port);
 
-	if ( bind(server_fd, (struct sockaddr*)&address, sizeof(address)) < 0 ) {
+	if ( bind(server_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0 ) {
 		throw std::runtime_error("bind failed");
 	}
 
-	if ( listen(server_fd, 3) < 0 ) {
-		throw std::runtime_error("listen error");
-	}
-
-	this->addrlen = sizeof(address);
-	
 	this->start();
 }
 
@@ -41,27 +35,28 @@ void Server::StopServer() {
 }
 
 void Server::Run() {
-	bool running = true;
+	running = true;
+	char buf[MAX_BUF];
 
-	std::cout << "Server started on " << this->port << std::endl;
+	int n;
+	socklen_t len = sizeof(client_addr);
 
 	while ( running ) {
-		int socket = accept(server_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
+		n = recvfrom(server_fd, (char*)buf, MAX_BUF, MSG_WAITALL, (struct sockaddr*)&client_addr, &len);
+		buf[n] = '\0';
 
-		if (socket < 0) {
-			throw std::runtime_error("accept error");
+		std::unique_ptr<Command> c = std::make_unique<Command>(buf);
+
+		try {
+			std::string result = c->Execute();
+			sendto(server_fd, (const char*)result.c_str(), result.size(), MSG_CONFIRM, (const struct sockaddr*)&client_addr, len);
 		}
-
-		std::cout << "Received Connection: ";
-
-		Handler handler = Handler(socket);
-
-		handler.start();
+		catch (std::exception& e) {
+			sendto(server_fd, e.what(), strlen(e.what()), MSG_CONFIRM, (const sockaddr*)&client_addr, len);
+		}
 	}
 
 	shutdown(server_fd, SHUT_RDWR);
-
-	std::cout << "Server stopped" << std::endl;
 }
 
 void Server::start() {

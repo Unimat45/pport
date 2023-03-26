@@ -1,8 +1,11 @@
 #include "Client.hpp"
 
 #include <iostream>
+#include <cstring>
 #include <unistd.h>
 #include <sys/socket.h>
+
+#define MAX_BUF 1024
 
 Client::Client(std::string ip, int port) {
 	this->ip = ip;
@@ -16,31 +19,27 @@ Client::~Client() {
 }
 
 void Client::initialize() {
-
-	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+	if ((client_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		throw std::runtime_error("Error creating socket");
 	}
 
+	memset(&serv_addr, 0, sizeof(serv_addr));
+
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(this->port);
-
-	if (inet_pton(AF_INET, this->ip.c_str(), &serv_addr.sin_addr) <= 0) {
-		throw std::runtime_error("Invalid address");
-	}
-
-	if ((client_fd = connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr))) < 0) {
-		throw std::runtime_error("Connection failed");
-	}
+	serv_addr.sin_addr.s_addr = INADDR_ANY;
 }
 
 void Client::Write(std::string message) {
-	send(this->sock, message.c_str(), message.size(), 0);
+	sendto(client_fd, message.c_str(), message.size(), MSG_CONFIRM, (const struct sockaddr*)&serv_addr, sizeof(serv_addr));
 }
 
 std::string Client::Read() {
-	char buf[512] = { 0 };
+	char buf[MAX_BUF];
+	socklen_t len;
 
-	read(this->sock, buf, 512);
+	int n = recvfrom(client_fd, (char*)buf, MAX_BUF, MSG_WAITALL, (struct sockaddr*)&serv_addr, &len);
+	buf[n] = '\0';
 
 	return std::string(buf);
 }

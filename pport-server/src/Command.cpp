@@ -7,7 +7,7 @@
 
 #define DEFAULT_LABEL(pin) "Pin " + std::to_string(pin)
 
-const std::regex RE_CMD("^(SET|SHOW(?:STR)?|REBOOT|TOGGLE)(?: (?:PIN ([2-9]|ALL))(?: (LABEL|HIGH|LOW) ?)?(\\w+)?)?$", std::regex_constants::icase);
+const std::regex RE_CMD("^(SET|SHOW|REBOOT|TOGGLE)(?: (?:PIN ([2-9]|ALL))(?: (LABEL|HIGH|LOW) ?)?(\\w+)?)?$", std::regex_constants::icase);
 
 Command::Command(std::string cmd) {
     this->cmd = cmd;
@@ -66,17 +66,6 @@ std::string Command::Execute() {
         Pin* p = parallel[this->pin];
 
         return p->ToJSONStr();
-    }
-
-    else if(this->inst == "SHOWSTR") {
-        // If only SHOW or SHOW ALL
-        if (this->pin == NO_PIN || this->pin == ALL_PINS) {
-            return parallel.ToString();
-        }
-
-        Pin* p = parallel[this->pin];
-
-        return p->ToString();
     }
     
     else if (this->inst == "TOGGLE") {

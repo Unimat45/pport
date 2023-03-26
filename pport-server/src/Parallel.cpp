@@ -8,17 +8,6 @@ Parallel::Parallel() {
     this->loadFromFile();
 }
 
-std::string Parallel::ToString() {
-    int longest = this->findLongest();
-    std::stringstream result;
-
-    for (size_t i = 0; i < PORT_SIZE; i++) {
-        result << this->pins[i].ToString(longest) << std::endl;
-    }
-    
-    return result.str();
-}
-
 Json::Value Parallel::ToJSON() {
     Json::Value result;
 
@@ -38,19 +27,6 @@ Pin* Parallel::operator[](int pin) {
         throw std::runtime_error("Invalid pin number");
     }
     return &this->pins[pin - 2];
-}
-
-int Parallel::findLongest() {
-    int longest = 0;
-    
-    for (size_t i = 0; i < PORT_SIZE; i++) {
-        int size = this->pins[i].ToString().size();
-
-        if (size > longest) {
-            longest = size;
-        }
-    }
-    return longest;    
 }
 
 void Parallel::WriteToFile() {

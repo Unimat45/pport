@@ -1,6 +1,8 @@
 #include <sys/io.h>
 #include <fstream>
 
+#include <unistd.h>
+
 #include "Server.h"
 
 #define SERVER_PORT 5663
@@ -44,6 +46,9 @@ int main() {
     handleReboot();
 
     Server server = Server(SERVER_PORT);
+
+
+	std::cout << "Server started on " << SERVER_PORT << std::endl;
 
     server.StartServer();
 

@@ -1,12 +1,12 @@
 #include <netinet/in.h>
-#include "Handler.h"
+
+#include "Command.h"
 
 class Server {
 private:
 	bool running = false;
 	int port;
-	int addrlen;
-	struct sockaddr_in address;
+	struct sockaddr_in serv_addr, client_addr;
 	int server_fd;
 
 public:

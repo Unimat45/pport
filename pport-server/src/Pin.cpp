@@ -46,18 +46,6 @@ Json::Value Pin::ToJSON() {
     return root;
 }
 
-std::string Pin::ToString() {
-    return this->label + ": " + (this->is_on ? "on" : "off");
-}
-
-std::string Pin::ToString(size_t longest) {
-    std::string str = this->label + ": ";
-
-    str.append(longest - str.size() - 3, ' ');
-
-    return str + (this->is_on ? "on" : "off");
-}
-
 short Pin::GetPin() {
     return this->pin;
 }

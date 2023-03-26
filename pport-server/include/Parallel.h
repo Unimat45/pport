@@ -8,15 +8,13 @@ class Parallel {
 private:
     Pin pins[PORT_SIZE];
 
-    int findLongest();
     void loadFromFile();
 
 public:
     Parallel();
 
     Pin* operator[](int pin);
-
-    std::string ToString();
+    
     std::string ToJSONStr();
     Json::Value ToJSON();
 

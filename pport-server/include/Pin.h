@@ -18,8 +18,6 @@ public:
 
     std::string ToJSONStr();
     Json::Value ToJSON();
-    std::string ToString();
-    std::string ToString(size_t longest);
 
     short GetPin();
     bool GetState();

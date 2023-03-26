@@ -5,7 +5,6 @@ class Client {
 private:
 	std::string ip;
 	int port;
-	int sock;
 	int client_fd;
 	struct sockaddr_in serv_addr;
 
