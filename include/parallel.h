@@ -11,7 +11,7 @@ typedef enum {
 
 typedef struct {
 	char* label;
-	PinState is_on;
+	PinState state;
 } Pin;
 
 Pin parallel[8];

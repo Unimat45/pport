@@ -12,6 +12,7 @@ typedef enum {
 } Instruction;
 
 typedef enum {
+    NOPIN = 0,
     PIN2 = 2,
     PIN3,
     PIN4,
@@ -30,7 +31,7 @@ typedef struct {
     char *label;
 } Command;
 
-Command* parse_command(const char* cmd);
+Command* token_command(const char* cmd);
 
 void free_command(Command *cmd);
 
