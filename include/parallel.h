@@ -21,4 +21,6 @@ void write_to_file();
 
 int get_port_state();
 
+const char* pin_to_json(Pin *p);
+
 #endif // PARALLEL_H

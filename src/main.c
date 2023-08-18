@@ -2,17 +2,13 @@
 #include "command.h"
 
 int main(void) {
-    Command* c = token_command("SHOW PIN ALL");
+    Pin p;
+    p.label = "Piscine";
+    p.state = ON;
 
-    if (c == NULL) {
-        (void)printf("Failed to parse\n");
-        return 1;
-    }
+    const char *buf = pin_to_json(&p);
 
-    (void)printf("%d\n", c->instruction);
-    (void)printf("%d\n", c->pin);
-
-    free_command(c);
+    printf("%s\n", buf);
 
     return 0;    
 }
