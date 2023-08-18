@@ -1,16 +1,20 @@
 #include "command.h"
+#include "tokstr.h"
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
+#include <stdio.h>
+
+
+#ifdef _MSC_VER
+#define IS_SAME(a, b) (_strcmpi(a, b) == 0)
+#else
+#include <strings.h>
+#define IS_SAME(a, b) (strcasecmp(a, b) == 0)
+#endif
 
 #define MAX_ITER 15
 #define MAX_LABEL 260
-#define IS_SAME(a, b) (_strcmpi(a, b) == 0)
-
-#ifdef _MSC_VER
-#define strtok_r strtok_s
-#endif
 
 void free_command(Command *cmd) {
     if (!cmd) {
@@ -23,9 +27,8 @@ void free_command(Command *cmd) {
 }
 
 Command* token_command(const char* cmd) {
-    char *next_token;
-    char *token =	strtok_r((char *)cmd, " ", &next_token);
-    uint8_t iter = 0;
+    size_t token_len;
+    char **tokens = tokstr((char *) cmd, " ", &token_len);
 
     Command *c = malloc(sizeof(Command));
 
@@ -38,60 +41,59 @@ Command* token_command(const char* cmd) {
     c->label = (char*)malloc(sizeof(char) * MAX_LABEL);
     memset(c->label, 0, sizeof(char) * MAX_LABEL);
 
-    while (token != NULL && iter++ < MAX_ITER) {
-        if (iter == 1) {
-            if (IS_SAME(token, "SET")) {
+    for (size_t iter = 0; iter < token_len; iter++) {
+        if (iter == 0) {
+            if (IS_SAME(tokens[iter], "SET")) {
                 c->instruction = SET;
             }
-            else if (IS_SAME(token, "SHOW")) {
+            else if (IS_SAME(tokens[iter], "SHOW")) {
                 c->instruction = SHOW;
             }
-            else if (IS_SAME(token, "REBOOT")) {
+            else if (IS_SAME(tokens[iter], "REBOOT")) {
                 c->instruction = REBOOT;
                 return c;
             }
-            else if (IS_SAME(token, "TOGGLE")) {
+            else if (IS_SAME(tokens[iter], "TOGGLE")) {
                 c->instruction = TOGGLE;
             }
-            else if (IS_SAME(token, "LABEL")) {
+            else if (IS_SAME(tokens[iter], "LABEL")) {
                 c->instruction = LABEL;
             }
             else {
                 return NULL;
             }
         }
-        else if (iter == 2 && !IS_SAME(token, "PIN")) {
+        else if (iter == 1 && !IS_SAME(tokens[iter], "PIN")) {
             return NULL;
         }
-        else if (iter == 3){
-            if (*token >= '2' && *token <= '9') {
-                c->pin = *token - '0';
+        else if (iter == 2){
+            if (*tokens[iter] >= '2' && *tokens[iter] <= '9') {
+                c->pin = *tokens[iter] - '0';
             }
-            else if (IS_SAME(token, "ALL")) {
+            else if (IS_SAME(tokens[iter], "ALL")) {
                 c->pin = ALL;
             }
             else {
                 return NULL;
             }
         }
-        else if (iter == 4) {
-            if (IS_SAME(token, "ON") || IS_SAME(token, "HIGH")) {
+        else if (iter == 3) {
+            if (IS_SAME(tokens[iter], "ON") || IS_SAME(tokens[iter], "HIGH")) {
                 c->state = ON;
             }
-            else if (IS_SAME(token, "OFF") || IS_SAME(token, "LOW")) {
+            else if (IS_SAME(tokens[iter], "OFF") || IS_SAME(tokens[iter], "LOW")) {
                 c->state = OFF;
             }
             else {
-                strncat(c->label, token, strlen(token));
+                strncat(c->label, tokens[iter], strlen(tokens[iter]));
             }
         }
         else if (iter > 3) {
-            strncat(c->label, token, strlen(token));
+            strncat(c->label, tokens[iter], strlen(tokens[iter]));
         }
-
-        token = strtok_r(NULL, " ", &next_token);
     }
 
+    free(tokens);
     return c;
 }
 

@@ -2,7 +2,7 @@
 #include "command.h"
 
 int main(void) {
-    Command* c = token_command("SHOW");
+    Command* c = token_command("SHOW PIN ALL");
 
     if (c == NULL) {
         (void)printf("Failed to parse\n");
