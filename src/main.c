@@ -2,11 +2,9 @@
 #include "command.h"
 
 int main(void) {
-    Pin p;
-    p.label = "Piscine";
-    p.state = ON;
+    load_parallel_from_file();
 
-    const char *buf = pin_to_json(&p);
+    const char *buf = pin_to_json(&parallel[0]);
 
     printf("%s\n", buf);
 

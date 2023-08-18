@@ -1,17 +1,37 @@
 #include "parallel.h"
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "json-c/json_object.h"
 #include "json-c/json_tokener.h"
 
+#define DEFAULT_LABEL "Pin "
+
+static void free_parallel_labels(void) {
+    for (size_t i = 0; i < sizeof(parallel); i++) {
+		if (parallel[i].label) {
+        	free(parallel[i].label);
+		}
+    }
+}
+
 void load_parallel_from_file() {
+	atexit(free_parallel_labels);
+
 	FILE *fp = fopen(STATE_FILE, "r");
 
 	if (fp == NULL) {
 		for (size_t i = 0; i < sizeof(parallel); i++) {
 			Pin p;
-			p.label = "Pin " + (i + 2 + '0');
+			p.label = malloc(sizeof(char) * 6);
+
+			char tmp = i + 2 + '0';
+			strncpy(p.label, DEFAULT_LABEL, 4);
+			strncat(p.label, &tmp, 1);
+			p.label[5] = 0;
+
 			// TODO: Replace with port state (inb())
 			p.state = OFF;
 
@@ -20,7 +40,7 @@ void load_parallel_from_file() {
 		return;
 	}
 
-	
+	fclose(fp);
 }
 
 void write_to_file() {
