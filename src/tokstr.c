@@ -5,6 +5,7 @@
 
 char** tokstr(char* str, const char* delim, size_t* size) {
 	char** result = malloc(sizeof(char) * 260 * MAX_ITER);
+	size_t delim_len = strlen(delim);
 
 	if (result == NULL) {
 		return NULL;
@@ -36,7 +37,7 @@ char** tokstr(char* str, const char* delim, size_t* size) {
 
 		result[iter++] = buf;
 
-		old = f + 1;
+		old = f + delim_len;
 		f = strstr(old, delim);
 	}
 
