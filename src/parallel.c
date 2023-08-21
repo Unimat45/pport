@@ -36,7 +36,19 @@ char* read_file(FILE *fp, size_t* len) {
 	return buf;
 }
 
+#define DEFAULT_LABEL "Pin "
+
+static void free_parallel_labels(void) {
+    for (size_t i = 0; i < sizeof(parallel); i++) {
+		if (parallel[i]->label) {
+        	free(parallel[i]->label);
+		}
+    }
+}
+
 void load_parallel_from_file() {
+	atexit(free_parallel_labels);
+
 	FILE *fp = fopen(STATE_FILE, "r");
 
 	atexit(free_parallel);

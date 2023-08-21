@@ -8,7 +8,7 @@ EXEC	:= pport
 
 TEST 	:= test
 
-LIB		:= 
+LIB		:= -ljson-c
 
 all: $(BIN)/$(EXEC)
 
