@@ -4,16 +4,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+#ifndef _MSC_VER
+#include <sys/io.h>
+#endif
+
 #define READ_BUF 512
+#define DEFAULT_LABEL "Pin "
 
 void free_parallel(void) {
 	for (size_t i = 0; i < 8; i++) {
 		Pin *p = parallel[i];
 
 		if (p) {
-			if (p->label) {
-				free(p->label);
-			}
 			free(p);
 		}
 	}
@@ -36,24 +39,15 @@ char* read_file(FILE *fp, size_t* len) {
 	return buf;
 }
 
-#define DEFAULT_LABEL "Pin "
-
-static void free_parallel_labels(void) {
-    for (size_t i = 0; i < sizeof(parallel); i++) {
-		if (parallel[i]->label) {
-        	free(parallel[i]->label);
-		}
-    }
-}
 
 void load_parallel_from_file() {
-	atexit(free_parallel_labels);
+	atexit(free_parallel);
 
 	FILE *fp = fopen(STATE_FILE, "r");
 
-	atexit(free_parallel);
-
 	if (fp == NULL) {
+		uint8_t current_value = inb(PORT);
+
 		for (int i = 0; i < 8; i++) {
 			Pin *p = malloc(sizeof(Pin));
 			p->label = malloc(sizeof(char) * 6);
@@ -62,8 +56,7 @@ void load_parallel_from_file() {
 			p->label[4] = i + 2 + '0';
 			p->label[5] = 0;
 
-			// TODO: Replace with port state (inb())
-			p->state = OFF;
+			p->state = (current_value & (1 << i)) != 0 ? ON : OFF;
 
 			parallel[i] = p;
 		}

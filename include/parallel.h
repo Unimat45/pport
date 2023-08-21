@@ -6,7 +6,7 @@
 
 #define PORT 0x378
 
-#ifdef _MSC_VER
+#ifndef _MSC_VER
 #define STATE_FILE "pport.conf"
 #else
 #define STATE_FILE "/etc/pport.conf"

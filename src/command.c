@@ -20,7 +20,6 @@ extern void outb(uint8_t value, uint16_t port);
 #define MAX_ITER 15
 #define MAX_LABEL 260
 
-
 void free_command(Command *cmd) {
     if (!cmd) {
         return;
@@ -118,16 +117,17 @@ const char *parse_command(Command* c) {
             case ALL:
                 outb(0xFF * c->state, PORT);
                 return "{\"success\":true}";
-            default:
-                uint8_t current_value = inb(PORT);
-                if (c->state) {
-                    outb(current_value | (1 << (c->pin - 2)), PORT);
+            default: {
+                    uint8_t current_value = inb(PORT);
+                    if (c->state) {
+                        outb(current_value | (1 << (c->pin - 2)), PORT);
+                    }
+                    else {
+                        outb(current_value & (0xFF - (1 << (c->pin - 2))), PORT);
+                    }
+                    parallel[c->pin - 2]->state = c->state;
+                    return "{\"success\":true}";
                 }
-                else {
-                    outb(current_value & (0xFF - (1 << (c->pin - 2))), PORT);
-                }
-                parallel[c->pin - 2]->state = c->state;
-                return "{\"success\":true}";
             }
         }
         case REBOOT:
