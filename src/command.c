@@ -2,9 +2,9 @@
 #include "tokstr.h"
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <stdio.h>
-
 
 #ifdef _MSC_VER
 #define IS_SAME(a, b) (_strcmpi(a, b) == 0)
@@ -97,21 +97,47 @@ Command* token_command(const char* cmd) {
     return c;
 }
 
-void *parse_command(Command* c) {
+char *parse_command(Command* c) {
     switch (c->instruction) {
         case SHOW: {
             if (c->pin == NOPIN || c->pin == ALL) {
-                // TODO: Return JSON for all pins
+                return parallel_to_json();
             }
-            break;
+            return pin_to_json(parallel[c->pin - 2]);
         }
         case SET: {
             // Cannot not have a pin number
+            switch (c->pin) {
+            case NOPIN:
+                return NULL;
+            case ALL:
+                outb(PORT, 0xFF * c->state);
+                return "{\"success\":true}";
+            default:
+                if (c->state) {
+                    uint8_t current_value = inb(PORT);
+                    outb(PORT, current_value | (1 << (c->pin - 2)));
+                }
+                else {
+                    uint8_t current_value = inb(PORT);
+                    outb(PORT, current_value & (0xFF - (1 << (c->pin - 2))));
+                }
+                parallel[c->pin - 2]->state = c->state;
+                return "{\"success\":true}";
+            }
+        }
+        case REBOOT:
+            load_parallel_from_file();
+            return "{\"success\":true}";
+        case TOGGLE: {
             if (c->pin == NOPIN) {
                 return NULL;
             }
 
-            break;
+            uint8_t current_value = inb(PORT);
+        }
+        case LABEL: {
+
         }
     }
 
