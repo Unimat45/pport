@@ -29,6 +29,6 @@ void load_parallel_from_file(void);
 void write_to_file(void);
 int get_port_state(void);
 json_object* pin_to_json(Pin *p);
-char* parallel_to_json(void);
+const char* parallel_to_json(void);
 
 #endif // PARALLEL_H

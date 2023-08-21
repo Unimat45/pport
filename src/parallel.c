@@ -58,7 +58,7 @@ void load_parallel_from_file() {
 			Pin *p = malloc(sizeof(Pin));
 			p->label = malloc(sizeof(char) * 6);
 
-			memcpy(p->label, "Pin ", 4);
+			memcpy(p->label, DEFAULT_LABEL, 4);
 			p->label[4] = i + 2 + '0';
 			p->label[5] = 0;
 
@@ -144,7 +144,7 @@ json_object* pin_to_json(Pin *p) {
 	return obj;
 }
 
-char* parallel_to_json() {
+const char* parallel_to_json() {
 	json_object *arr = json_object_new_array();
 
 	for (size_t i = 0; i < 8; i++) {

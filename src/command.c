@@ -8,13 +8,18 @@
 
 #ifdef _MSC_VER
 #define IS_SAME(a, b) (_strcmpi(a, b) == 0)
+extern uint8_t inb(uint16_t port);
+extern void outb(uint8_t value, uint16_t port);
 #else
+#include <sys/io.h>
 #include <strings.h>
 #define IS_SAME(a, b) (strcasecmp(a, b) == 0)
 #endif
 
+#define MIN(a, b) (a < b ? a : b)
 #define MAX_ITER 15
 #define MAX_LABEL 260
+
 
 void free_command(Command *cmd) {
     if (!cmd) {
@@ -97,30 +102,29 @@ Command* token_command(const char* cmd) {
     return c;
 }
 
-char *parse_command(Command* c) {
+const char *parse_command(Command* c) {
     switch (c->instruction) {
         case SHOW: {
             if (c->pin == NOPIN || c->pin == ALL) {
                 return parallel_to_json();
             }
-            return pin_to_json(parallel[c->pin - 2]);
+            return json_object_to_json_string(pin_to_json(parallel[c->pin - 2]));
         }
         case SET: {
-            // Cannot not have a pin number
             switch (c->pin) {
+            // Cannot not have a pin number
             case NOPIN:
                 return NULL;
             case ALL:
-                outb(PORT, 0xFF * c->state);
+                outb(0xFF * c->state, PORT);
                 return "{\"success\":true}";
             default:
+                uint8_t current_value = inb(PORT);
                 if (c->state) {
-                    uint8_t current_value = inb(PORT);
-                    outb(PORT, current_value | (1 << (c->pin - 2)));
+                    outb(current_value | (1 << (c->pin - 2)), PORT);
                 }
                 else {
-                    uint8_t current_value = inb(PORT);
-                    outb(PORT, current_value & (0xFF - (1 << (c->pin - 2))));
+                    outb(current_value & (0xFF - (1 << (c->pin - 2))), PORT);
                 }
                 parallel[c->pin - 2]->state = c->state;
                 return "{\"success\":true}";
@@ -135,11 +139,32 @@ char *parse_command(Command* c) {
             }
 
             uint8_t current_value = inb(PORT);
+            Pin *p = parallel[c->pin - 2];
+
+            if (p->state) {
+                outb(current_value & (0xFF - (1 << (c->pin - 2))), PORT);
+            }
+            else {
+                outb(current_value | (1 << (c->pin - 2)), PORT);
+            }
+
+            p->state = !p->state;
+            return "{\"success\":true}";
         }
         case LABEL: {
+            if (c->pin == NOPIN) {
+                return NULL;
+            }
 
+            Pin *p = parallel[c->pin - 2];
+
+            (void)strncpy(p->label, c->label, MIN(strlen(c->label), MAX_LABEL));
+
+            return "{\"success\":true}";
         }
+        default:
+            break;
     }
 
-    return c;
+    return NULL;
 }
