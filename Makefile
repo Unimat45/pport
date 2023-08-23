@@ -1,5 +1,5 @@
 CC 		:= clang
-C_FLAGS := -Wall -std=c17 -ggdb
+C_FLAGS := -O2 -Wall -Wextra -std=c17 -s
 
 INCLUDE := include
 SRC 	:= src
