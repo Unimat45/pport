@@ -1,20 +1,15 @@
 #include "command.h"
 #include "tokstr.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <string.h>
-#include <stdio.h>
-
-#ifdef _MSC_VER
-#define IS_SAME(a, b) (_strcmpi(a, b) == 0)
-extern uint8_t inb(uint16_t port);
-extern void outb(uint8_t value, uint16_t port);
-#else
 #include <sys/io.h>
+
+#include <string.h>
 #include <strings.h>
+
 #define IS_SAME(a, b) (strcasecmp(a, b) == 0)
-#endif
 
 #define MIN(a, b) (a < b ? a : b)
 #define MAX_ITER 15

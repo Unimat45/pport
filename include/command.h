@@ -31,7 +31,8 @@ typedef struct {
     char *label;
 } Command;
 
-const char *parse_command(Command* c);
 void free_command(Command *cmd);
+const char *parse_command(Command* c);
+Command* token_command(const char* cmd);
 
 #endif // COMMAND_H
