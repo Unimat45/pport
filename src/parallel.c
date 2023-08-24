@@ -12,6 +12,8 @@
 #define READ_BUF 512
 #define DEFAULT_LABEL "Pin "
 
+Pin *parallel[8];
+
 void free_parallel(void) {
 	for (size_t i = 0; i < 8; i++) {
 		Pin *p = parallel[i];
@@ -72,7 +74,7 @@ void load_parallel_from_file() {
 	json_object *data = json_tokener_parse(json);
 	json_object* pins = json_object_object_get(data, "pins");
 
-	for (size_t i = 0; i < sizeof(parallel); i++) {
+	for (size_t i = 0; i < 8; i++) {
 		json_object * p = json_object_array_get_idx(pins, i);
 
 		json_object* lbl =  json_object_object_get(p, "Label");

@@ -22,8 +22,6 @@ typedef struct {
 	PinState state;
 } Pin;
 
-Pin *parallel[8];
-
 void write_to_file(void);
 int get_port_state(void);
 json_object* pin_to_json(Pin *p);
