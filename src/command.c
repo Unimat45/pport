@@ -102,7 +102,7 @@ const char *parse_command(Command* c) {
             if (c->pin == NOPIN || c->pin == ALL) {
                 return parallel_to_json();
             }
-            return json_object_to_json_string(pin_to_json(parallel[c->pin - 2]));
+            return json_object_to_json_string(pin_to_json(get_pin(c->pin - 2)));
         }
         case SET: {
             switch (c->pin) {
@@ -120,7 +120,7 @@ const char *parse_command(Command* c) {
                     else {
                         outb(current_value & (0xFF - (1 << (c->pin - 2))), PORT);
                     }
-                    parallel[c->pin - 2]->state = c->state;
+                    get_pin(c->pin - 2)->state = c->state;
                     return "{\"success\":true}";
                 }
             }
@@ -134,7 +134,7 @@ const char *parse_command(Command* c) {
             }
 
             uint8_t current_value = inb(PORT);
-            Pin *p = parallel[c->pin - 2];
+            Pin *p = get_pin(c->pin - 2);
 
             if (p->state) {
                 outb(current_value & (0xFF - (1 << (c->pin - 2))), PORT);
@@ -151,7 +151,7 @@ const char *parse_command(Command* c) {
                 return NULL;
             }
 
-            Pin *p = parallel[c->pin - 2];
+            Pin *p = get_pin(c->pin - 2);
 
             (void)strncpy(p->label, c->label, MIN(strlen(c->label), MAX_LABEL));
 

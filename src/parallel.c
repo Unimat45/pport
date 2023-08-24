@@ -1,6 +1,5 @@
 #include "parallel.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -22,6 +21,10 @@ void free_parallel(void) {
 			free(p);
 		}
 	}
+}
+
+Pin *get_pin(uint8_t i) {
+	return parallel[i];
 }
 
 char* read_file(FILE *fp, size_t* len) {
