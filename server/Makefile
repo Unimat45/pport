@@ -1,12 +1,12 @@
-CC 		:= cc
+CC      ?= cc
 C_FLAGS := -O3 -Wall -Wextra -std=c11 -s
 
 INCLUDE := include
-SRC 	:= src
-BIN 	:= bin
-EXEC	:= pport
+SRC     := src
+BIN     := bin
+EXEC    := pport
 
-LIB		:= -ljson-c
+LIB     := -ljson-c
 
 all: $(BIN)/$(EXEC)
 

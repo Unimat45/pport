@@ -2,11 +2,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-
-
-#ifndef _MSC_VER
 #include <sys/io.h>
-#endif
 
 #define READ_BUF 512
 #define DEFAULT_LABEL "Pin "
@@ -73,6 +69,7 @@ void load_parallel_from_file() {
 
 	size_t file_len;
 	char *json = read_file(fp, &file_len);
+	uint8_t value = 0;	
 
 	json_object *data = json_tokener_parse(json);
 	json_object* pins = json_object_object_get(data, "pins");
@@ -87,11 +84,12 @@ void load_parallel_from_file() {
 		pin->label = (char*)json_object_get_string(lbl);
 		pin->state = json_object_get_int(state);
 
+		value |= (1 << i) * pin->state;
+
 		parallel[i] = pin;
 	}
 
-	json_object *value = json_object_object_get(data, "value");
-	outb( json_object_get_uint64(value) & 255, PORT );
+	outb( value, PORT );
 
 	fclose(fp);
 }
@@ -107,8 +105,6 @@ void write_to_file() {
 	}
 	json_object_object_add(root, "pins", pins);
 
-	json_object *value = json_object_new_int(get_port_state());
-	json_object_object_add(root, "value", value);
 
 	FILE *fp = fopen(STATE_FILE, "w");
 
@@ -121,16 +117,6 @@ void write_to_file() {
 	fflush(fp);
 
 	fclose(fp);
-}
-
-int get_port_state() {
-	int result = 0;
-
-	for (size_t i = 0; i < 8; i++) {
-		result += parallel[i]->state << i;
-	}
-
-	return result;
 }
 
 json_object* pin_to_json(Pin *p) {
