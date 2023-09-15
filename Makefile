@@ -1,17 +1,12 @@
-CC 		:= clang
-C_FLAGS := -O3 -Wall -Wextra -std=c11 -s
+SUBDIRS := $(wildcard */.)
 
-INCLUDE := include
-SRC 	:= src
-BIN 	:= bin
-EXEC	:= pport
+all: $(SUBDIRS)
+$(SUBDIRS):
+		$(MAKE) -C $@
 
-LIB		:= -ljson-c
-
-all: $(BIN)/$(EXEC)
-
-$(BIN)/$(EXEC): $(SRC)/*.c
-	$(CC) $(C_FLAGS) -I$(INCLUDE) $^ -o $@ $(LIB)
+.PHONY: all $(SUBDIRS)
 
 clean:
-	rm $(BIN)/*
+	for dir in $(SUBDIRS); do \
+		$(MAKE) -C $$dir clean; \
+	done

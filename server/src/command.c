@@ -11,7 +11,6 @@
 
 #define IS_SAME(a, b) (strcasecmp(a, b) == 0)
 
-#define MIN(a, b) (a < b ? a : b)
 #define MAX_ITER 15
 #define MAX_LABEL 260
 
@@ -84,11 +83,11 @@ Command* token_command(const char* cmd) {
                 c->state = OFF;
             }
             else {
-                strncat(c->label, tokens[iter], strlen(tokens[iter]));
+                strncat(c->label, tokens[iter], MAX_LABEL);
             }
         }
         else if (iter > 3) {
-            strncat(c->label, tokens[iter], strlen(tokens[iter]));
+            strncat(c->label, tokens[iter], MAX_LABEL);
         }
     }
 
@@ -153,7 +152,7 @@ const char *parse_command(Command* c) {
 
             Pin *p = get_pin(c->pin - 2);
 
-            (void)strncpy(p->label, c->label, MIN(strlen(c->label), MAX_LABEL));
+            (void)strncpy(p->label, c->label, MAX_LABEL);
 
             return json_object_to_json_string(pin_to_json(get_pin(c->pin - 2)));
         }
