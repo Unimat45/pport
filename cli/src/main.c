@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
 
     if (off != 0) {
         char cmd[15];
-        snprintf(cmd, 15, "SET PIN %d LOW", on);
+        snprintf(cmd, 15, "SET PIN %d LOW", off);
 
         free(udp_send(HOST, PORT, cmd));
         (void)printf("%s\n", cmd);
@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
 
     if (toggle != 0) {
         char cmd[19];
-        snprintf(cmd, 19, "TOGGLE PIN %d HIGH", on);
+        snprintf(cmd, 19, "TOGGLE PIN %d HIGH", toggle);
 
         free(udp_send(HOST, PORT, cmd));
         (void)printf("%s\n", cmd);  
