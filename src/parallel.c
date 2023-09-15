@@ -80,8 +80,8 @@ void load_parallel_from_file() {
 	for (size_t i = 0; i < 8; i++) {
 		json_object * p = json_object_array_get_idx(pins, i);
 
-		json_object* lbl =  json_object_object_get(p, "Label");
-		json_object* state =  json_object_object_get(p, "State");
+		json_object* lbl =  json_object_object_get(p, "label");
+		json_object* state =  json_object_object_get(p, "state");
 
 		Pin* pin = malloc(sizeof(Pin));
 		pin->label = (char*)json_object_get_string(lbl);
@@ -89,6 +89,9 @@ void load_parallel_from_file() {
 
 		parallel[i] = pin;
 	}
+
+	json_object *value = json_object_object_get(data, "value");
+	outb( json_object_get_uint64(value) & 255, PORT );
 
 	fclose(fp);
 }
@@ -134,10 +137,10 @@ json_object* pin_to_json(Pin *p) {
 	json_object* obj = json_object_new_object();
 
 	json_object* label = json_object_new_string(p->label);
-	json_object_object_add(obj, "Label", label);
+	json_object_object_add(obj, "label", label);
 
 	json_object* state = json_object_new_int(p->state);
-	json_object_object_add(obj, "State", state);
+	json_object_object_add(obj, "state", state);
 
 	return obj;
 }
