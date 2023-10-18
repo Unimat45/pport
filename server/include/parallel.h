@@ -18,7 +18,7 @@ typedef enum {
 } PinState;
 
 typedef struct {
-	char* label;
+	char label[260];
 	PinState state;
 } Pin;
 

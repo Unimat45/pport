@@ -7,12 +7,14 @@
 #define READ_BUF 512
 #define DEFAULT_LABEL "Pin "
 
+#define MIN(a,b) (a > b ? b : a)
+
 Pin *parallel[8];
 
 void free_parallel(void) {
 	for (size_t i = 0; i < 8; i++) {
 		Pin *p = parallel[i];
-
+		
 		if (p) {
 			free(p);
 		}
@@ -33,7 +35,7 @@ char* read_file(FILE *fp, size_t* len) {
 	rewind(fp);
 
 	char *buf = malloc(*len + 1);
-	fread(buf, 1, *len, fp);
+	*len = fread(buf, 1, *len, fp);
 
 	buf[*len] = 0;
 	
@@ -51,7 +53,6 @@ void load_parallel_from_file() {
 
 		for (int i = 0; i < 8; i++) {
 			Pin *p = malloc(sizeof(Pin));
-			p->label = malloc(sizeof(char) * 6);
 
 			memcpy(p->label, DEFAULT_LABEL, 4);
 			p->label[4] = i + 2 + '0';
@@ -81,7 +82,11 @@ void load_parallel_from_file() {
 		json_object* state =  json_object_object_get(p, "state");
 
 		Pin* pin = malloc(sizeof(Pin));
-		pin->label = (char*)json_object_get_string(lbl);
+
+		const char *tmp = json_object_get_string(lbl);
+		size_t str_len = strlen(tmp) + 1;
+		memcpy(pin->label, tmp, MIN(str_len, 260));
+
 		pin->state = json_object_get_int(state);
 
 		value |= (1 << i) * pin->state;

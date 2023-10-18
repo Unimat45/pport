@@ -71,6 +71,8 @@ int main(int argc, char **argv) {
     int on = 0;
     int off = 0;
     int toggle = 0;
+    int pin = 0;
+    char *label = NULL;
 
     struct argparse_option options[] = {
         OPT_HELP(),
@@ -80,6 +82,8 @@ int main(int argc, char **argv) {
         OPT_INTEGER('n', "on", &on, "Sets the provided pin high", NULL, 0, 0),
         OPT_INTEGER('f', "off", &off, "Sets the provided pin low", NULL, 0, 0),
         OPT_INTEGER('t', "toggle", &toggle, "Toggles the provided pin", NULL, 0, 0),
+        OPT_STRING('l', "label", &label, "Sets a label to a provided pin", NULL, 0, 0),
+        OPT_INTEGER('p', "pin", &pin, "To use with label, specifies the pin", NULL, 0, 0),
 
         OPT_END()
     };
@@ -162,6 +166,22 @@ int main(int argc, char **argv) {
     if (toggle != 0) {
         char cmd[19];
         snprintf(cmd, 19, "TOGGLE PIN %d HIGH", toggle);
+
+        char *res = udp_send(HOST, PORT, cmd);
+        json_object *data = json_tokener_parse(res);
+        free(res);
+
+        prettyPrint(data);
+    }
+
+    if (label != NULL) {
+        if (pin == 0) {
+            fprintf(stderr, "No pin specified! Please specify pin with the --pin option\n");
+            return 1;
+        }
+
+        char cmd[278];
+        snprintf(cmd, 278, "LABEL PIN %d %s", pin, label);
 
         char *res = udp_send(HOST, PORT, cmd);
         json_object *data = json_tokener_parse(res);

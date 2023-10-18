@@ -110,6 +110,7 @@ const char *parse_command(Command* c) {
                 return NULL;
             case ALL:
                 outb(0xFF * c->state, PORT);
+                write_to_file();
                 return parallel_to_json();
             default: {
                     uint8_t current_value = inb(PORT);
@@ -120,6 +121,7 @@ const char *parse_command(Command* c) {
                         outb(current_value & (0xFF - (1 << (c->pin - 2))), PORT);
                     }
                     get_pin(c->pin - 2)->state = c->state;
+                    write_to_file();
                     return json_object_to_json_string(pin_to_json(get_pin(c->pin - 2)));
                 }
             }
@@ -143,6 +145,7 @@ const char *parse_command(Command* c) {
             }
 
             p->state = !p->state;
+            write_to_file();
             return json_object_to_json_string(pin_to_json(get_pin(c->pin - 2)));
         }
         case LABEL: {
@@ -152,8 +155,9 @@ const char *parse_command(Command* c) {
 
             Pin *p = get_pin(c->pin - 2);
 
-            (void)strncpy(p->label, c->label, MAX_LABEL);
+            (void)strncpy(p->label, c->label, MAX_LABEL - 1);
 
+            write_to_file();
             return json_object_to_json_string(pin_to_json(get_pin(c->pin - 2)));
         }
         default:
