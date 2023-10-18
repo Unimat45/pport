@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-void *udp_send(const char *const host, const uint16_t port, const char *const cmd);
+void *udp_send(const char *const host, const uint16_t port, const char *const cmd, size_t *res_len);
 
 #ifdef __cplusplus
 }

@@ -100,13 +100,13 @@ Command* token_command(const char* cmd) {
     return c;
 }
 
-const void *parse_command(Command* c) {
+void *parse_command(Command* c, size_t* len) {
     switch (c->instruction) {
         case SHOW: {
             if (c->pin == NOPIN || c->pin == ALL) {
                 return parallel_to_json();
             }
-            return get_pin(c->pin - 2);
+            return pin_to_mem(get_pin(c->pin - 2), len);
             // return json_object_to_json_string(pin_to_json(get_pin(c->pin - 2)));
         }
         case SET: {

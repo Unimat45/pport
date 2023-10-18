@@ -117,7 +117,8 @@ int main(int argc, char **argv) {
                 return 0;
             }
 
-            uint8_t *res = udp_send(HOST, PORT, cmd);
+            size_t res_len;
+            Pin *res = udp_send(HOST, PORT, cmd, &res_len);
 
             // if (strstr(res, "ERROR") != NULL) {
             //     (void)printf("%s\n", res);
@@ -126,12 +127,6 @@ int main(int argc, char **argv) {
                 // json_object *data = json_tokener_parse(res);
                 // prettyPrint(data);
             // }
-
-            for (size_t i = 0; i < 9; i++) {
-                printf("%02x ", res[i]);
-            }
-            Pin *p = (Pin *)res;
-            printf("\n%s: %d\n", p->label, p->state);
 
             free(res);
         }
@@ -143,7 +138,7 @@ int main(int argc, char **argv) {
     argc = argparse_parse(&argparse, argc, (const char **)argv);
 
     if (status) {
-        char *res = udp_send(HOST, PORT, "SHOW");
+        char *res = udp_send(HOST, PORT, "SHOW", NULL);
         json_object *data = json_tokener_parse(res);
         free(res);
 
@@ -153,7 +148,7 @@ int main(int argc, char **argv) {
     }
 
     if (reboot) {
-        char *res = udp_send(HOST, PORT, "REBOOT");
+        char *res = udp_send(HOST, PORT, "REBOOT", NULL);
         (void)printf("%s\n", res);
         free(res);
 
@@ -164,7 +159,7 @@ int main(int argc, char **argv) {
         char cmd[16];
         snprintf(cmd, 16, "SET PIN %d HIGH", on);
 
-        char *res = udp_send(HOST, PORT, cmd);
+        char *res = udp_send(HOST, PORT, cmd, NULL);
         json_object *data = json_tokener_parse(res);
         free(res);
 
@@ -175,7 +170,7 @@ int main(int argc, char **argv) {
         char cmd[15];
         snprintf(cmd, 15, "SET PIN %d LOW", off);
 
-        char *res = udp_send(HOST, PORT, cmd);
+        char *res = udp_send(HOST, PORT, cmd, NULL);
         json_object *data = json_tokener_parse(res);
         free(res);
 
@@ -186,7 +181,7 @@ int main(int argc, char **argv) {
         char cmd[19];
         snprintf(cmd, 19, "TOGGLE PIN %d HIGH", toggle);
 
-        char *res = udp_send(HOST, PORT, cmd);
+        char *res = udp_send(HOST, PORT, cmd, NULL);
         json_object *data = json_tokener_parse(res);
         free(res);
 
@@ -202,7 +197,7 @@ int main(int argc, char **argv) {
         char cmd[278];
         snprintf(cmd, 278, "LABEL PIN %d %s", pin, label);
 
-        char *res = udp_send(HOST, PORT, cmd);
+        char *res = udp_send(HOST, PORT, cmd, NULL);
         json_object *data = json_tokener_parse(res);
         free(res);
 

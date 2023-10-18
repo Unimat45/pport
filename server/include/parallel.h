@@ -19,12 +19,13 @@ typedef enum {
 
 typedef struct {
 	PinState state;
-	char *label;
+	char label[260];
 } Pin;
 
 Pin *get_pin(uint8_t i);
 void write_to_file(void);
 int get_port_state(void);
+void* pin_to_mem(Pin *p, size_t* len);
 json_object* pin_to_json(Pin *p);
 void load_parallel_from_file(void);
 const char* parallel_to_json(void);

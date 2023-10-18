@@ -58,20 +58,17 @@ void start_server() {
             continue;
         }
 
-        const Pin *result = parse_command(cmd);
+        size_t r_len;
+        void *result = parse_command(cmd, &r_len);
 
         if (result == NULL) {
             sendto(server_fd, "ERROR: Invalid Syntax", 22, MSG_CONFIRM, (const struct sockaddr *)&client_adr, msg_len);
             continue;
         }
 
-        uint8_t *buf = (uint8_t *)result;
-        for (size_t i = 0; i <= strlen(result->label) + 4; i++) {
-            printf("%02x ", buf[i]);
-        }
-        printf("\n%s\n", result->label);
+        sendto(server_fd, result, r_len, MSG_CONFIRM, (const struct sockaddr *)&client_adr, msg_len);
 
-        sendto(server_fd, result, strlen(result->label) + 1, MSG_CONFIRM, (const struct sockaddr *)&client_adr, msg_len);
+        free(result);
     }
 
     shutdown(server_fd, SHUT_RDWR);

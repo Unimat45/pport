@@ -6,7 +6,7 @@
 
 #define MAXLINE 1024
 
-void *udp_send(const char *const host, const uint16_t port, const char *const cmd) {
+void *udp_send(const char *const host, const uint16_t port, const char *const cmd, size_t *res_len) {
 	int sockfd;
     struct sockaddr_in servaddr;
    
@@ -31,14 +31,16 @@ void *udp_send(const char *const host, const uint16_t port, const char *const cm
         return NULL;
     }
 
-    char *buffer = malloc(sizeof(char) * MAXLINE);
+    void *buffer = malloc(MAXLINE);
     n = recvfrom(sockfd, buffer, MAXLINE, MSG_WAITALL, (struct sockaddr *) &servaddr, &len);
 
     if (n < 0) {
         return NULL;
     }
 
-    buffer[n] = '\0';
+    if (res_len != NULL) {
+        *res_len = n;
+    }
    
     close(sockfd);
 
