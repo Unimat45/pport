@@ -1,4 +1,5 @@
 #include "command.h"
+#include "parallel.h"
 #include "tokstr.h"
 
 #include <stdio.h>
@@ -8,6 +9,10 @@
 
 #include <string.h>
 #include <strings.h>
+
+#ifndef DNDEBUG
+#include "test_outb.h"
+#endif
 
 #define IS_SAME(a, b) (strcasecmp(a, b) == 0)
 
@@ -95,13 +100,14 @@ Command* token_command(const char* cmd) {
     return c;
 }
 
-const char *parse_command(Command* c) {
+const void *parse_command(Command* c) {
     switch (c->instruction) {
         case SHOW: {
             if (c->pin == NOPIN || c->pin == ALL) {
                 return parallel_to_json();
             }
-            return json_object_to_json_string(pin_to_json(get_pin(c->pin - 2)));
+            return get_pin(c->pin - 2);
+            // return json_object_to_json_string(pin_to_json(get_pin(c->pin - 2)));
         }
         case SET: {
             switch (c->pin) {

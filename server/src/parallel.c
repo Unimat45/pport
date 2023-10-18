@@ -4,6 +4,10 @@
 #include <string.h>
 #include <sys/io.h>
 
+#ifndef DNDEBUG
+#include "test_outb.h"
+#endif
+
 #define READ_BUF 512
 #define DEFAULT_LABEL "Pin "
 
@@ -53,6 +57,7 @@ void load_parallel_from_file() {
 
 		for (int i = 0; i < 8; i++) {
 			Pin *p = malloc(sizeof(Pin));
+			p->label = malloc(sizeof(char) * 6);
 
 			memcpy(p->label, DEFAULT_LABEL, 4);
 			p->label[4] = i + 2 + '0';
@@ -84,7 +89,9 @@ void load_parallel_from_file() {
 		Pin* pin = malloc(sizeof(Pin));
 
 		const char *tmp = json_object_get_string(lbl);
-		size_t str_len = strlen(tmp) + 1;
+		size_t str_len = json_object_get_string_len(lbl) + 1;
+
+		pin->label = malloc(sizeof(char) * 260);
 		memcpy(pin->label, tmp, MIN(str_len, 260));
 
 		pin->state = json_object_get_int(state);

@@ -9,8 +9,18 @@
 #include "argparse.h"
 #include "udp_send.h"
 
-#define HOST "10.0.0.106"
+#define HOST "127.0.0.1"
 #define PORT 5663
+
+typedef enum {
+	OFF = 0,
+	ON
+} PinState;
+
+typedef struct {
+	PinState state;
+	char label[260];
+} Pin;
 
 static const char *const usages[] = {
     "pport [options]",
@@ -25,6 +35,9 @@ int findLongestLabel(json_object *arr) {
 
         json_object *label = json_object_object_get(p, "label");
 
+            // if (strstr(res, "ERROR") != NULL) {
+            //     (void)printf("%s\n", res);
+            // }
         int l = json_object_get_string_len(label);
 
         if (l > longest) {
@@ -104,15 +117,21 @@ int main(int argc, char **argv) {
                 return 0;
             }
 
-            char *res = udp_send(HOST, PORT, cmd);
+            uint8_t *res = udp_send(HOST, PORT, cmd);
 
-            if (strstr(res, "ERROR") != NULL) {
-                (void)printf("%s\n", res);
+            // if (strstr(res, "ERROR") != NULL) {
+            //     (void)printf("%s\n", res);
+            // }
+            // else {
+                // json_object *data = json_tokener_parse(res);
+                // prettyPrint(data);
+            // }
+
+            for (size_t i = 0; i < 9; i++) {
+                printf("%02x ", res[i]);
             }
-            else {
-                json_object *data = json_tokener_parse(res);
-                prettyPrint(data);
-            }
+            Pin *p = (Pin *)res;
+            printf("\n%s: %d\n", p->label, p->state);
 
             free(res);
         }

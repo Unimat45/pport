@@ -32,7 +32,7 @@ typedef struct {
 } Command;
 
 void free_command(Command *cmd);
-const char *parse_command(Command* c);
+const void *parse_command(Command* c);
 Command* token_command(const char* cmd);
 
 #endif // COMMAND_H

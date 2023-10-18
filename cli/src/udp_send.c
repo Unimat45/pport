@@ -6,7 +6,7 @@
 
 #define MAXLINE 1024
 
-char *udp_send(const char *const host, const uint16_t port, const char *const cmd) {
+void *udp_send(const char *const host, const uint16_t port, const char *const cmd) {
 	int sockfd;
     struct sockaddr_in servaddr;
    

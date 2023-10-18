@@ -18,8 +18,8 @@ typedef enum {
 } PinState;
 
 typedef struct {
-	char label[260];
 	PinState state;
+	char *label;
 } Pin;
 
 Pin *get_pin(uint8_t i);
