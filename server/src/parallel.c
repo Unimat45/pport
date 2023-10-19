@@ -1,5 +1,6 @@
 #include "parallel.h"
 
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/io.h>
@@ -104,6 +105,18 @@ void load_parallel_from_file() {
 	fclose(fp);
 }
 
+json_object* pin_to_json(Pin *p) {
+	json_object* obj = json_object_new_object();
+
+	json_object* label = json_object_new_string(p->label);
+	json_object_object_add(obj, "label", label);
+
+	json_object* state = json_object_new_int(p->state);
+	json_object_object_add(obj, "state", state);
+
+	return obj;
+}
+
 void write_to_file() {
 	json_object *root = json_object_new_object();
 	json_object *pins = json_object_new_array();
@@ -129,21 +142,9 @@ void write_to_file() {
 	fclose(fp);
 }
 
-json_object* pin_to_json(Pin *p) {
-	json_object* obj = json_object_new_object();
-
-	json_object* label = json_object_new_string(p->label);
-	json_object_object_add(obj, "label", label);
-
-	json_object* state = json_object_new_int(p->state);
-	json_object_object_add(obj, "state", state);
-
-	return obj;
-}
-
 void *pin_to_mem(Pin *p, size_t *len) {
-	// Allocate 1 more byte for terminator
-	size_t data_len = sizeof(p->state) + strlen(p->label) + 1;
+	// Allocate 1 more byte for terminator, plus 1 more for "is array"
+	size_t data_len = sizeof(p->state) + strlen(p->label) + 2;
 
 	void *buf = malloc(data_len);
 
@@ -151,8 +152,9 @@ void *pin_to_mem(Pin *p, size_t *len) {
 		return NULL;
 	}
 
-	memcpy(buf, &(p->state), sizeof(p->state));
-	memcpy(buf + sizeof(p->state), p->label, strlen(p->label) + 1);
+  memset(buf, 0, 1);
+  memcpy(buf + 1, &(p->state), sizeof(p->state));
+	memcpy(buf + 1 + sizeof(p->state), p->label, strlen(p->label) + 1);
 
 	if (len != NULL) {
 		*len = data_len;
@@ -161,14 +163,32 @@ void *pin_to_mem(Pin *p, size_t *len) {
 	return buf;
 }
 
-const char* parallel_to_json() {
-	json_object *arr = json_object_new_array();
+void *parallel_to_mem(size_t *all_len) {
+  size_t one_max_len = 261;
+  size_t total_len = 1;
 
-	for (size_t i = 0; i < 8; i++) {
-		json_object *p = pin_to_json(parallel[i]);
+  void *buf = malloc(one_max_len * 8 + 1);
 
-		json_object_array_add(arr, p);
-	}
-	
-	return json_object_to_json_string_ext(arr, JSON_C_TO_STRING_PLAIN);
+  if (buf == NULL) {
+    return NULL;
+  }
+
+  memset(buf, 1, 1);
+
+  for (size_t i = 0; i < 8; i++) {
+    size_t p_len = 1;
+    void *p_buf = pin_to_mem(parallel[i], &p_len);
+
+    memcpy(buf + total_len, p_buf + 1, p_len - 1);
+
+    total_len += p_len - 1;
+    free(p_buf);
+  }
+
+  if (all_len != NULL) {
+    *all_len = total_len;
+  }
+
+  return buf;
 }
+

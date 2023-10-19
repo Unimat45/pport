@@ -1,10 +1,10 @@
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <json-c/json_object.h>
-#include <json-c/json_tokener.h>
 
 #include "argparse.h"
 #include "udp_send.h"
@@ -12,13 +12,8 @@
 #define HOST "127.0.0.1"
 #define PORT 5663
 
-typedef enum {
-	OFF = 0,
-	ON
-} PinState;
-
 typedef struct {
-	PinState state;
+	uint8_t state;
 	char label[260];
 } Pin;
 
@@ -26,7 +21,7 @@ static const char *const usages[] = {
     "pport [options]",
     NULL,
 };
-
+/*
 int findLongestLabel(json_object *arr) {
     int longest = 0;
 
@@ -47,35 +42,27 @@ int findLongestLabel(json_object *arr) {
 
     return longest;
 }
+*/
+void prettyPrint(void *data) {
+  uint8_t is_array = *(uint8_t*)data;
 
-void prettyPrint(json_object *data) {
-    if (json_object_is_type(data, json_type_array)) {
-        int longest_label = findLongestLabel(data);
+  if (is_array) {
+    size_t last_len = 1;
+    for (size_t i = 0; i < 8; i++) {
+      Pin p;
+      memcpy(&p, data + last_len, 1);
+      strncpy(p.label, data + last_len + 1, 259);
+      last_len += strlen(p.label) + 2; // 2 for state + terminator
 
-        for (size_t i = 0; i < json_object_array_length(data); i++) {
-            json_object *p = json_object_array_get_idx(data, i);
-
-            json_object *label = json_object_object_get(p, "label");
-            json_object *state = json_object_object_get(p, "state");
-
-            char spaces_buf[1024];
-            int length = longest_label - json_object_get_string_len(label);
-            
-            if (length > 0) {
-                (void)memset(spaces_buf, ' ', length - 1);
-                spaces_buf[length] = 0;
-                (void)printf("%s%s: %s\n", spaces_buf, json_object_get_string(label), json_object_get_boolean(state) ? "on" : "off");
-            }
-            else {
-                (void)printf("%s: %s\n", json_object_get_string(label), json_object_get_boolean(state) ? "on" : "off");
-            }
-        }
+      printf("%s: %s\n", p.label, p.state ? "On" : "Off");
     }
-    else {
-        json_object *label = json_object_object_get(data, "label");
-        json_object *state = json_object_object_get(data, "state");
-        (void)printf("%s: %s\n", json_object_get_string(label), json_object_get_boolean(state) ? "on" : "off");
-    }
+  }
+  else {
+    Pin p;
+    memcpy(&p, data + 1, 1);
+    strncpy(p.label, data + 2, 259);
+    printf("%s: %s\n", p.label, p.state ? "On" : "Off");
+  }
 }
 
 int main(int argc, char **argv) {
@@ -118,15 +105,14 @@ int main(int argc, char **argv) {
             }
 
             size_t res_len;
-            Pin *res = udp_send(HOST, PORT, cmd, &res_len);
+            void *res = udp_send(HOST, PORT, cmd, &res_len);
 
-            // if (strstr(res, "ERROR") != NULL) {
-            //     (void)printf("%s\n", res);
-            // }
-            // else {
-                // json_object *data = json_tokener_parse(res);
-                // prettyPrint(data);
-            // }
+            if (strstr(res, "ERROR") != NULL) {
+                (void)printf("%s\n", (char*)res);
+            }
+            else {
+                prettyPrint(res);
+            }
 
             free(res);
         }
@@ -139,10 +125,10 @@ int main(int argc, char **argv) {
 
     if (status) {
         char *res = udp_send(HOST, PORT, "SHOW", NULL);
-        json_object *data = json_tokener_parse(res);
-        free(res);
+        
+        prettyPrint(res);
 
-        prettyPrint(data);
+        free(res);
 
         return 0;
     }
@@ -160,10 +146,8 @@ int main(int argc, char **argv) {
         snprintf(cmd, 16, "SET PIN %d HIGH", on);
 
         char *res = udp_send(HOST, PORT, cmd, NULL);
-        json_object *data = json_tokener_parse(res);
+        prettyPrint(res);
         free(res);
-
-        prettyPrint(data);
     }
 
     if (off != 0) {
@@ -171,10 +155,8 @@ int main(int argc, char **argv) {
         snprintf(cmd, 15, "SET PIN %d LOW", off);
 
         char *res = udp_send(HOST, PORT, cmd, NULL);
-        json_object *data = json_tokener_parse(res);
+        prettyPrint(res);
         free(res);
-
-        prettyPrint(data);
     }
 
     if (toggle != 0) {
@@ -182,10 +164,8 @@ int main(int argc, char **argv) {
         snprintf(cmd, 19, "TOGGLE PIN %d HIGH", toggle);
 
         char *res = udp_send(HOST, PORT, cmd, NULL);
-        json_object *data = json_tokener_parse(res);
+        prettyPrint(res);
         free(res);
-
-        prettyPrint(data);
     }
 
     if (label != NULL) {
@@ -198,10 +178,8 @@ int main(int argc, char **argv) {
         snprintf(cmd, 278, "LABEL PIN %d %s", pin, label);
 
         char *res = udp_send(HOST, PORT, cmd, NULL);
-        json_object *data = json_tokener_parse(res);
+        prettyPrint(res);
         free(res);
-
-        prettyPrint(data);
     }
 
     return 0;

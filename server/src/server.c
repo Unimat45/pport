@@ -2,8 +2,10 @@
 #include "command.h"
 
 #include <netinet/in.h>
+#include <stddef.h>
 #include <string.h>
 #include <strings.h>
+#include <sys/socket.h>
 
 #define IS_SAME(a,b) (strcasecmp(a,b) == 0)
 
@@ -48,6 +50,8 @@ void start_server() {
         buf[len] = 0;
 
         if (IS_SAME(buf, "STOP")) {
+            size_t para_len = 0;
+            sendto(server_fd, parallel_to_mem(&para_len), para_len, MSG_CONFIRM, (const struct sockaddr *)&client_adr, msg_len);
             break;
         }
 
@@ -60,6 +64,8 @@ void start_server() {
 
         size_t r_len;
         void *result = parse_command(cmd, &r_len);
+
+        free(cmd);
 
         if (result == NULL) {
             sendto(server_fd, "ERROR: Invalid Syntax", 22, MSG_CONFIRM, (const struct sockaddr *)&client_adr, msg_len);

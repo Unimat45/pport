@@ -7,7 +7,7 @@
 #define MAXLINE 1024
 
 void *udp_send(const char *const host, const uint16_t port, const char *const cmd, size_t *res_len) {
-	int sockfd;
+    int sockfd;
     struct sockaddr_in servaddr;
    
     // Creating socket file descriptor

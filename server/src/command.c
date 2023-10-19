@@ -104,10 +104,9 @@ void *parse_command(Command* c, size_t* len) {
     switch (c->instruction) {
         case SHOW: {
             if (c->pin == NOPIN || c->pin == ALL) {
-                return parallel_to_json();
+                return parallel_to_mem(len);
             }
             return pin_to_mem(get_pin(c->pin - 2), len);
-            // return json_object_to_json_string(pin_to_json(get_pin(c->pin - 2)));
         }
         case SET: {
             switch (c->pin) {
@@ -117,7 +116,7 @@ void *parse_command(Command* c, size_t* len) {
             case ALL:
                 outb(0xFF * c->state, PORT);
                 write_to_file();
-                return parallel_to_json();
+                return parallel_to_mem(len);
             default: {
                     uint8_t current_value = inb(PORT);
                     if (c->state) {
@@ -126,15 +125,17 @@ void *parse_command(Command* c, size_t* len) {
                     else {
                         outb(current_value & (0xFF - (1 << (c->pin - 2))), PORT);
                     }
-                    get_pin(c->pin - 2)->state = c->state;
+                    Pin *p = get_pin(c->pin - 2);
+                    p->state = c->state;
+
                     write_to_file();
-                    return json_object_to_json_string(pin_to_json(get_pin(c->pin - 2)));
+                    return pin_to_mem(p, len);
                 }
             }
         }
         case REBOOT:
             load_parallel_from_file();
-            return parallel_to_json();
+            return parallel_to_mem(len);
         case TOGGLE: {
             if (c->pin == NOPIN || c->pin == ALL) {
                 return NULL;
@@ -152,7 +153,7 @@ void *parse_command(Command* c, size_t* len) {
 
             p->state = !p->state;
             write_to_file();
-            return json_object_to_json_string(pin_to_json(get_pin(c->pin - 2)));
+            return pin_to_mem(p, len);
         }
         case LABEL: {
             if (c->pin == NOPIN || c->pin == ALL) {
@@ -164,7 +165,7 @@ void *parse_command(Command* c, size_t* len) {
             (void)strncpy(p->label, c->label, MAX_LABEL - 1);
 
             write_to_file();
-            return json_object_to_json_string(pin_to_json(get_pin(c->pin - 2)));
+            return pin_to_mem(p, len);
         }
         default:
             break;

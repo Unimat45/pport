@@ -2,6 +2,7 @@
 #define COMMAND_H
 
 #include "parallel.h"
+#include <stdint.h>
 
 typedef enum {
     SET = 0,
@@ -27,7 +28,7 @@ typedef enum {
 typedef struct {
     Instruction instruction;
     Pins pin;
-    PinState state;
+    uint8_t state;
     char *label;
 } Command;
 
