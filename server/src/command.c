@@ -89,10 +89,14 @@ Command* token_command(const char* cmd) {
             }
             else {
                 strncat(c->label, tokens[iter], MAX_LABEL);
+                strncat(c->label, " ", MAX_LABEL);
             }
         }
         else if (iter > 3) {
             strncat(c->label, tokens[iter], MAX_LABEL);
+            if (iter + 1 < token_len) {
+              strncat(c->label, " ", MAX_LABEL);
+            }
         }
     }
 

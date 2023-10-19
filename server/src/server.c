@@ -48,10 +48,8 @@ void start_server() {
     while (1) {
         len = recvfrom(server_fd, buf, MAX_BUF, MSG_WAITALL, (struct sockaddr *)&client_adr, &msg_len);
         buf[len] = 0;
-
         if (IS_SAME(buf, "STOP")) {
-            size_t para_len = 0;
-            sendto(server_fd, parallel_to_mem(&para_len), para_len, MSG_CONFIRM, (const struct sockaddr *)&client_adr, msg_len);
+            sendto(server_fd, "STOP", 5, MSG_CONFIRM, (const struct sockaddr *)&client_adr, msg_len);
             break;
         }
 

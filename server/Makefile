@@ -1,5 +1,5 @@
 CC      ?= cc
-C_FLAGS := -O3 -Wall -Wextra -std=c11 -s
+C_FLAGS := -O3 -DNDEBUG -Wall -Wextra -std=c11 -s
 
 INCLUDE := include
 SRC     := src

@@ -21,19 +21,12 @@ static const char *const usages[] = {
     "pport [options]",
     NULL,
 };
-/*
-int findLongestLabel(json_object *arr) {
+
+int findLongestLabel(Pin p[8]) {
     int longest = 0;
 
-    for (size_t i = 0; i < json_object_array_length(arr); i++) {
-        json_object *p = json_object_array_get_idx(arr, i);
-
-        json_object *label = json_object_object_get(p, "label");
-
-            // if (strstr(res, "ERROR") != NULL) {
-            //     (void)printf("%s\n", res);
-            // }
-        int l = json_object_get_string_len(label);
+    for (size_t i = 0; i < 8; i++) {
+        int l = (int)strlen(p[i].label);
 
         if (l > longest) {
             longest = l;
@@ -42,19 +35,41 @@ int findLongestLabel(json_object *arr) {
 
     return longest;
 }
-*/
+
 void prettyPrint(void *data) {
   uint8_t is_array = *(uint8_t*)data;
 
   if (is_array) {
+    Pin parallel[8];
+
     size_t last_len = 1;
     for (size_t i = 0; i < 8; i++) {
       Pin p;
+
       memcpy(&p, data + last_len, 1);
       strncpy(p.label, data + last_len + 1, 259);
-      last_len += strlen(p.label) + 2; // 2 for state + terminator
 
-      printf("%s: %s\n", p.label, p.state ? "On" : "Off");
+      last_len += strlen(p.label) + 2; // 2 for state + terminator
+      parallel[i] = p;
+    }
+
+    int longest = findLongestLabel(parallel);
+    
+    for (size_t i = 0; i < 8; i++) {
+      Pin p = parallel[i];
+
+      int padding = longest - (int)strlen(p.label);
+
+      if (!padding) {
+        printf("%s: %s\n", p.label, p.state ? "On" : "Off");
+      }
+      else {
+        char buf[260];
+        memset(buf, ' ', padding);
+        buf[padding] = 0;
+
+        printf("%s%s: %s\n", p.label, buf, p.state ? "On" : "Off");
+      }
     }
   }
   else {
@@ -106,6 +121,11 @@ int main(int argc, char **argv) {
 
             size_t res_len;
             void *res = udp_send(HOST, PORT, cmd, &res_len);
+
+            if (strstr(res, "STOP") != NULL) {
+              free(res);
+              return 0;
+            }
 
             if (strstr(res, "ERROR") != NULL) {
                 (void)printf("%s\n", (char*)res);
