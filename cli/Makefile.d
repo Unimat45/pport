@@ -4,7 +4,7 @@ C_FLAGS := -O3 -Wall -Wextra -std=c11 -g
 INCLUDE := include
 SRC     := src
 BIN     := bin
-EXEC    := pport
+EXEC    := pport-cli
 
 LIB     :=
 

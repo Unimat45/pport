@@ -22,11 +22,37 @@ static const char *const usages[] = {
     NULL,
 };
 
+size_t utf8_strlen(const char* s) {
+  size_t len = 0;
+
+  const uint8_t *bytes = (const uint8_t*)s;
+
+  while (*bytes != 0) {
+    if ((*bytes & 0x80) == 0 || (*bytes & 0xE0) == 0xC0) {
+      len++;
+      bytes++;
+    }
+    else if ((*bytes & 0xF0) == 0xE0) {
+      len++;
+      bytes += 2;
+    }
+    else if ((*bytes & 0xF8) == 0xF0) {
+      len++;
+      bytes += 3;
+    }
+    else {
+      bytes++;
+    }
+  }
+
+  return len;
+}
+
 int findLongestLabel(Pin p[8]) {
     int longest = 0;
 
     for (size_t i = 0; i < 8; i++) {
-        int l = (int)strlen(p[i].label);
+        int l = (int)utf8_strlen(p[i].label);
 
         if (l > longest) {
             longest = l;
@@ -58,7 +84,7 @@ void prettyPrint(void *data) {
     for (size_t i = 0; i < 8; i++) {
       Pin p = parallel[i];
 
-      int padding = longest - (int)strlen(p.label);
+      int padding = longest - (int)utf8_strlen(p.label);
 
       if (!padding) {
         printf("%s: %s\n", p.label, p.state ? "On" : "Off");
