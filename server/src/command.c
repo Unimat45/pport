@@ -10,10 +10,6 @@
 #include <string.h>
 #include <strings.h>
 
-#ifndef DNDEBUG
-#include "test_outb.h"
-#endif
-
 #define IS_SAME(a, b) (strcasecmp(a, b) == 0)
 
 #define MAX_ITER 15

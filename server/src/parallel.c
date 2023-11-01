@@ -5,10 +5,6 @@
 #include <string.h>
 #include <sys/io.h>
 
-#ifndef DNDEBUG
-#include "test_outb.h"
-#endif
-
 #define READ_BUF 512
 #define DEFAULT_LABEL "Pin "
 
