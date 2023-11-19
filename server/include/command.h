@@ -29,7 +29,7 @@ typedef struct {
     Instruction instruction;
     Pins pin;
     uint8_t state;
-    char *label;
+    char label[260];
 } Command;
 
 void free_command(Command *cmd);

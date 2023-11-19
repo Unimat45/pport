@@ -3,20 +3,53 @@
 
 #define MAX_ITER 15
 
-char** tokstr(char* str, const char* delim, size_t* size) {
-	char** result = malloc(sizeof(char) * 260 * MAX_ITER);
-	size_t delim_len = strlen(delim);
+char *__tokstr(const char *str, const char delim) {
+	static char *input = NULL;
+	
+	if (str != NULL) {
+		input = str;
+	}
 
+	if (input == NULL) {
+		return NULL;
+	}
+
+	char *result = malloc(strlen(input) + 1);
+
+	int i = 0;
+
+	while (input[i]) {
+		if (input[i] != delim) {
+			result[i] = input[i];
+		}
+		else {
+			result[i] = 0;
+			input = input + i + 1;
+
+			return result;
+		}
+
+		i++;
+	}
+
+	result[i] = 0;
+	input = NULL;
+
+	return result;
+}
+
+size_t tokstr(char** result, char* str, const char* delim) {
 	if (result == NULL) {
 		return NULL;
 	}
+
+	size_t delim_len = strlen(delim);
 
 	char* f = strstr(str, delim);
 
 	if (f == NULL) {
 		result[0] = str;
-		*size = 1;
-		return result;
+		return 1;
 	}
 
 	char* old = str;
@@ -26,22 +59,28 @@ char** tokstr(char* str, const char* delim, size_t* size) {
 	while (f != NULL && iter < MAX_ITER) {
 		size_t len = f - old;
 
-		char* buf = malloc(sizeof(char) * len);
+		result[iter] = malloc(len);
 
-		if (buf == NULL) {
-			continue;
+		if (result[iter] == NULL) {
+			return iter;
 		}
 
-		memcpy(buf, old, len);
-		buf[len] = 0;
-
-		result[iter++] = buf;
+		memcpy(result[iter], old, len);
+		result[iter++][len] = 0;
 
 		old = f + delim_len;
 		f = strstr(old, delim);
 	}
 
-	result[iter++] = old;
-	*size = iter;
-	return result;
+	size_t len = strlen(old);
+
+	result[iter++] = malloc(len);
+
+	if (result[iter] == NULL) {
+		return 0;
+	}
+
+	memcpy(result[iter], old, len);
+
+	return iter;
 }

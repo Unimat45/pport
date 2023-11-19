@@ -25,88 +25,112 @@ void free_command(Command *cmd) {
     free(cmd);
 }
 
-Command* token_command(const char* cmd) {
-    size_t token_len;
-    char **tokens = tokstr((char *) cmd, " ", &token_len);
-
-    Command *c = malloc(sizeof(Command));
-
+unsigned char token_command(Command *c, const char* cmd) {
     if (c == NULL) {
-        return NULL;
+        return 0;
+    }
+
+    char *token = __tokstr(cmd, ' ');
+
+    if (token == NULL) {
+        goto tok_err;
     }
 
     c->pin = NOPIN;
     c->state = OFF;
-    c->label = (char*)malloc(sizeof(char) * MAX_LABEL);
-    memset(c->label, 0, sizeof(char) * MAX_LABEL);
+    memset(c->label, 0, MAX_LABEL);
 
-    for (size_t iter = 0; iter < token_len; iter++) {
-        if (iter == 0) {
-            if (IS_SAME(tokens[iter], "SET")) {
-                c->instruction = SET;
-            }
-            else if (IS_SAME(tokens[iter], "SHOW")) {
-                c->instruction = SHOW;
-            }
-            else if (IS_SAME(tokens[iter], "REBOOT")) {
-                c->instruction = REBOOT;
-                return c;
-            }
-            else if (IS_SAME(tokens[iter], "TOGGLE")) {
-                c->instruction = TOGGLE;
-            }
-            else if (IS_SAME(tokens[iter], "LABEL")) {
-                c->instruction = LABEL;
-            }
-            else {
-                return NULL;
-            }
-        }
-        else if (iter == 1 && !IS_SAME(tokens[iter], "PIN")) {
-            return NULL;
-        }
-        else if (iter == 2){
-            if (*tokens[iter] >= '2' && *tokens[iter] <= '9') {
-                c->pin = *tokens[iter] - '0';
-            }
-            else if (IS_SAME(tokens[iter], "ALL")) {
-                c->pin = ALL;
-            }
-            else {
-                return NULL;
-            }
-        }
-        else if (iter == 3) {
-            if (IS_SAME(tokens[iter], "ON") || IS_SAME(tokens[iter], "HIGH")) {
-                c->state = ON;
-            }
-            else if (IS_SAME(tokens[iter], "OFF") || IS_SAME(tokens[iter], "LOW")) {
-                c->state = OFF;
-            }
-            else {
-                strncat(c->label, tokens[iter], MAX_LABEL);
-                strncat(c->label, " ", MAX_LABEL);
-            }
-        }
-        else if (iter > 3) {
-            strncat(c->label, tokens[iter], MAX_LABEL);
-            if (iter + 1 < token_len) {
-              strncat(c->label, " ", MAX_LABEL);
-            }
-        }
+    if (IS_SAME(token, "SET")) {
+        c->instruction = SET;
+    }
+    else if (IS_SAME(token, "SHOW")) {
+        c->instruction = SHOW;
+    }
+    else if (IS_SAME(token, "REBOOT")) {
+        c->instruction = REBOOT;
+        return 1;
+    }
+    else if (IS_SAME(token, "TOGGLE")) {
+        c->instruction = TOGGLE;
+    }
+    else if (IS_SAME(token, "LABEL")) {
+        c->instruction = LABEL;
+    }
+    else {
+        free(token);
+        goto tok_err;
     }
 
-    free(tokens);
-    return c;
+    free(token);
+    token = __tokstr(cmd, ' ');
+
+    if (token == NULL || !IS_SAME(token, "PIN")) {
+        if (token) { free(token); }
+        goto tok_err;
+    }
+
+    free(token);
+    token = __tokstr(cmd, ' ');
+
+    if (token == NULL) {
+        goto tok_err;
+    }
+    
+    if (*token >= '2' && *token <= '9') {
+        c->pin = *token - '0';
+    }
+    else if (IS_SAME(token, "ALL")) {
+        c->pin = ALL;
+    }
+    else {
+        free(token);
+        goto tok_err;
+    }
+
+    token = __tokstr(cmd, ' ');
+
+    if (token == NULL) {
+        goto tok_err;
+    }
+
+    if (IS_SAME(token, "ON") || IS_SAME(token, "HIGH")) {
+        c->state = ON;
+    }
+    else if (IS_SAME(token, "OFF") || IS_SAME(token, "LOW")) {
+        c->state = OFF;
+    }
+    else {
+        strncat(c->label, token, MAX_LABEL);
+        strncat(c->label, " ", MAX_LABEL);
+    }
+    
+    free(token);
+
+    while ((token = __tokstr(cmd, ' ')) != NULL) {
+        strncat(c->label, token, MAX_LABEL);
+        strncat(c->label, " ", MAX_LABEL);
+        
+        free(token);
+    }
+
+    size_t len = strlen(c->label) - 1;
+    c->label[len] = 0;
+
+    free(token);
+    return 1;
+
+tok_err:
+    c = NULL;
+    return 0;
 }
 
-void *parse_command(Command* c, size_t* len) {
+void *parse_command(Pin parallel[8], Command* c, size_t* len) {
     switch (c->instruction) {
         case SHOW: {
             if (c->pin == NOPIN || c->pin == ALL) {
                 return parallel_to_mem(len);
             }
-            return pin_to_mem(get_pin(c->pin - 2), len);
+            return pin_to_mem(parallel[c->pin - 2], len);
         }
         case SET: {
             switch (c->pin) {
@@ -115,8 +139,8 @@ void *parse_command(Command* c, size_t* len) {
                 return NULL;
             case ALL:
                 outb(0xFF * c->state, PORT);
-                write_to_file();
-                return parallel_to_mem(len);
+                write_to_file(parallel);
+                return parallel_to_mem(len, parallel);
             default: {
                     uint8_t current_value = inb(PORT);
                     if (c->state) {
@@ -125,7 +149,7 @@ void *parse_command(Command* c, size_t* len) {
                     else {
                         outb(current_value & (0xFF - (1 << (c->pin - 2))), PORT);
                     }
-                    Pin *p = get_pin(c->pin - 2);
+                    Pin *p = parallel[c->pin - 2];
                     p->state = c->state;
 
                     write_to_file();
@@ -134,15 +158,15 @@ void *parse_command(Command* c, size_t* len) {
             }
         }
         case REBOOT:
-            load_parallel_from_file();
-            return parallel_to_mem(len);
+            load_parallel_from_file(parallel);
+            return parallel_to_mem(len, parallel);
         case TOGGLE: {
             if (c->pin == NOPIN || c->pin == ALL) {
                 return NULL;
             }
 
             uint8_t current_value = inb(PORT);
-            Pin *p = get_pin(c->pin - 2);
+            Pin *p = parallel[c->pin - 2];
 
             if (p->state) {
                 outb(current_value & (0xFF - (1 << (c->pin - 2))), PORT);
@@ -152,7 +176,7 @@ void *parse_command(Command* c, size_t* len) {
             }
 
             p->state = !p->state;
-            write_to_file();
+            write_to_file(parallel);
             return pin_to_mem(p, len);
         }
         case LABEL: {
@@ -160,11 +184,11 @@ void *parse_command(Command* c, size_t* len) {
                 return NULL;
             }
 
-            Pin *p = get_pin(c->pin - 2);
+            Pin *p = parallel[c->pin - 2];
 
             (void)strncpy(p->label, c->label, MAX_LABEL - 1);
 
-            write_to_file();
+            write_to_file(parallel);
             return pin_to_mem(p, len);
         }
         default:

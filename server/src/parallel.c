@@ -10,22 +10,6 @@
 
 #define MIN(a,b) (a > b ? b : a)
 
-Pin *parallel[8];
-
-void free_parallel(void) {
-	for (size_t i = 0; i < 8; i++) {
-		Pin *p = parallel[i];
-		
-		if (p) {
-			free(p);
-		}
-	}
-}
-
-Pin *get_pin(uint8_t i) {
-	return parallel[i];
-}
-
 char* read_file(FILE *fp, size_t* len) {
 	if (fp == NULL) {
 		return NULL;
@@ -43,59 +27,56 @@ char* read_file(FILE *fp, size_t* len) {
 	return buf;
 }
 
-
-void load_parallel_from_file() {
-	atexit(free_parallel);
-
+void load_parallel_from_file(Pin parallel[8]) {
 	FILE *fp = fopen(STATE_FILE, "r");
 
 	if (fp == NULL) {
 		uint8_t current_value = inb(PORT);
 
 		for (int i = 0; i < 8; i++) {
-			Pin *p = malloc(sizeof(Pin));
+			Pin p;
 
-			memcpy(p->label, DEFAULT_LABEL, 4);
-			p->label[4] = i + 2 + '0';
-			p->label[5] = 0;
+			memcpy(p.label, DEFAULT_LABEL, 4);
+			p.label[4] = i + 2 + '0';
+			p.label[5] = 0;
 
-			p->state = (current_value & (1 << i)) != 0 ? ON : OFF;
+			p.state = (current_value & (1 << i)) & 1;
 
 			parallel[i] = p;
 		}
 
 		write_to_file();
-
-		return;
 	}
+	else {
+		size_t file_len;
+		char *json = read_file(fp, &file_len);
+		uint8_t value = 0;	
 
-	size_t file_len;
-	char *json = read_file(fp, &file_len);
-	uint8_t value = 0;	
+		json_object *data = json_tokener_parse(json);
+		free(json);
 
-	json_object *data = json_tokener_parse(json);
-	json_object* pins = json_object_object_get(data, "pins");
+		json_object* pins = json_object_object_get(data, "pins");
 
-	for (size_t i = 0; i < 8; i++) {
-		json_object * p = json_object_array_get_idx(pins, i);
+		for (size_t i = 0; i < 8; i++) {
+			json_object * p = json_object_array_get_idx(pins, i);
 
-		json_object* lbl =  json_object_object_get(p, "label");
-		json_object* state =  json_object_object_get(p, "state");
+			json_object* lbl =  json_object_object_get(p, "label");
+			json_object* state =  json_object_object_get(p, "state");
 
-		Pin* pin = malloc(sizeof(Pin));
+			Pin pin;
 
-		const char *tmp = json_object_get_string(lbl);
-		size_t str_len = json_object_get_string_len(lbl) + 1;
+			const char *tmp = json_object_get_string(lbl);
+			size_t str_len = json_object_get_string_len(lbl) + 1;
 
-		memcpy(pin->label, tmp, MIN(str_len, 260));
+			memcpy(pin.label, tmp, MIN(str_len, 260));
 
-		pin->state = json_object_get_int(state);
+			pin.state = json_object_get_int(state);
 
-		value |= (1 << i) * pin->state;
+			value |= (1 << i) * pin.state;
 
-		parallel[i] = pin;
+			parallel[i] = pin;
+		}
 	}
-
 	outb( value, PORT );
 
 	fclose(fp);
@@ -113,7 +94,7 @@ json_object* pin_to_json(Pin *p) {
 	return obj;
 }
 
-void write_to_file() {
+void write_to_file(Pin parallel[8]) {
 	json_object *root = json_object_new_object();
 	json_object *pins = json_object_new_array();
 	
@@ -138,53 +119,44 @@ void write_to_file() {
 	fclose(fp);
 }
 
-void *pin_to_mem(Pin *p, size_t *len) {
+size_t pin_to_mem(void *buf, Pin *p) {
 	// Allocate 1 more byte for terminator, plus 1 more for "is array"
 	size_t data_len = sizeof(p->state) + strlen(p->label) + 2;
 
-	void *buf = malloc(data_len);
+	// void *buf = malloc(data_len);
 
 	if (buf == NULL) {
 		return NULL;
 	}
 
-  memset(buf, 0, 1);
-  memcpy(buf + 1, &(p->state), sizeof(p->state));
+  	memset(buf, 0, 1);
+  	memcpy(buf + 1, &(p->state), sizeof(p->state));
 	memcpy(buf + 1 + sizeof(p->state), p->label, strlen(p->label) + 1);
 
-	if (len != NULL) {
-		*len = data_len;
+	return data_len;
+}
+
+size_t parallel_to_mem(void *buf, Pin parallel[8]) {
+	size_t one_max_len = 261;
+	size_t total_len = 1;
+
+	// void *buf = malloc(one_max_len * 8 + 1);
+
+	if (buf == NULL) {
+		return NULL;
 	}
 
-	return buf;
+	memset(buf, 1, 1);
+
+	for (size_t i = 0; i < 8; i++) {
+		size_t p_len = 1;
+		void *p_buf = pin_to_mem(parallel[i], &p_len);
+
+		memcpy(buf + total_len, p_buf + 1, p_len - 1);
+
+		total_len += p_len - 1;
+		free(p_buf);
+	}
+
+	return total_len;
 }
-
-void *parallel_to_mem(size_t *all_len) {
-  size_t one_max_len = 261;
-  size_t total_len = 1;
-
-  void *buf = malloc(one_max_len * 8 + 1);
-
-  if (buf == NULL) {
-    return NULL;
-  }
-
-  memset(buf, 1, 1);
-
-  for (size_t i = 0; i < 8; i++) {
-    size_t p_len = 1;
-    void *p_buf = pin_to_mem(parallel[i], &p_len);
-
-    memcpy(buf + total_len, p_buf + 1, p_len - 1);
-
-    total_len += p_len - 1;
-    free(p_buf);
-  }
-
-  if (all_len != NULL) {
-    *all_len = total_len;
-  }
-
-  return buf;
-}
-
