@@ -1,5 +1,4 @@
 #include "server.h"
-#include "command.h"
 
 #include <netinet/in.h>
 #include <stddef.h>
@@ -14,8 +13,8 @@
 struct sockaddr_in server_adr, client_adr;
 int server_fd;
 
-int initialize_server(uint16_t port) {
-    load_parallel_from_file();
+int initialize_server(uint16_t port, Pin parallel[8]) {
+    load_parallel_from_file(parallel);
 
     server_fd = socket(AF_INET, SOCK_DGRAM, 0);
 
@@ -39,7 +38,7 @@ int initialize_server(uint16_t port) {
     return 0;
 }
 
-void start_server() {
+void start_server(Pin parallel[8]) {
     char buf[MAX_BUF];
 
     ssize_t len;
@@ -53,24 +52,23 @@ void start_server() {
             break;
         }
 
-        Command *cmd = token_command(buf);
+        Command cmd;
+        unsigned char is_ok = token_command(&cmd, buf);
 
-        if (cmd == NULL) {
+        if (!is_ok) {
             sendto(server_fd, "ERROR: Invalid Syntax", 22, MSG_CONFIRM, (const struct sockaddr *)&client_adr, msg_len);
             continue;
         }
 
-        size_t r_len;
-        void *result = parse_command(cmd, &r_len);
-
-        free(cmd);
+        size_t res_len;
+        void *result = parse_command(parallel, &cmd, &res_len);
 
         if (result == NULL) {
             sendto(server_fd, "ERROR: Invalid Syntax", 22, MSG_CONFIRM, (const struct sockaddr *)&client_adr, msg_len);
             continue;
         }
 
-        sendto(server_fd, result, r_len, MSG_CONFIRM, (const struct sockaddr *)&client_adr, msg_len);
+        sendto(server_fd, result, res_len, MSG_CONFIRM, (const struct sockaddr *)&client_adr, msg_len);
 
         free(result);
     }

@@ -29,11 +29,11 @@ typedef struct {
     Instruction instruction;
     Pins pin;
     uint8_t state;
-    char label[260];
+    char label[261];
 } Command;
 
 void free_command(Command *cmd);
-void *parse_command(Command* c, size_t *len);
-Command* token_command(const char* cmd);
+void *parse_command(Pin parallel[8], Command* c, size_t *len);
+unsigned char token_command(Command *c, char* cmd);
 
 #endif // COMMAND_H

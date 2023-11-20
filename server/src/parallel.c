@@ -45,7 +45,7 @@ void load_parallel_from_file(Pin parallel[8]) {
 			parallel[i] = p;
 		}
 
-		write_to_file();
+		write_to_file(parallel);
 	}
 	else {
 		size_t file_len;
@@ -76,8 +76,8 @@ void load_parallel_from_file(Pin parallel[8]) {
 
 			parallel[i] = pin;
 		}
+		outb( value, PORT );
 	}
-	outb( value, PORT );
 
 	fclose(fp);
 }
@@ -99,7 +99,7 @@ void write_to_file(Pin parallel[8]) {
 	json_object *pins = json_object_new_array();
 	
 	for (size_t i = 0; i < 8; i++) {
-		json_object* p = pin_to_json(parallel[i]);
+		json_object* p = pin_to_json(&parallel[i]);
 
 		json_object_array_add(pins, p);
 	}
@@ -119,28 +119,32 @@ void write_to_file(Pin parallel[8]) {
 	fclose(fp);
 }
 
-size_t pin_to_mem(void *buf, Pin *p) {
+void *pin_to_mem(Pin *p, size_t *len) {
 	// Allocate 1 more byte for terminator, plus 1 more for "is array"
 	size_t data_len = sizeof(p->state) + strlen(p->label) + 2;
 
-	// void *buf = malloc(data_len);
+	void *buf = malloc(data_len);
 
 	if (buf == NULL) {
 		return NULL;
 	}
 
-  	memset(buf, 0, 1);
-  	memcpy(buf + 1, &(p->state), sizeof(p->state));
+  memset(buf, 0, 1);
+  memcpy(buf + 1, &(p->state), sizeof(p->state));
 	memcpy(buf + 1 + sizeof(p->state), p->label, strlen(p->label) + 1);
 
-	return data_len;
+  if (len != NULL) {
+    *len = data_len;
+  }
+
+	return buf;
 }
 
-size_t parallel_to_mem(void *buf, Pin parallel[8]) {
+void *parallel_to_mem(Pin parallel[8], size_t *len) {
 	size_t one_max_len = 261;
 	size_t total_len = 1;
 
-	// void *buf = malloc(one_max_len * 8 + 1);
+	void *buf = malloc(one_max_len * 8 + 1);
 
 	if (buf == NULL) {
 		return NULL;
@@ -149,8 +153,9 @@ size_t parallel_to_mem(void *buf, Pin parallel[8]) {
 	memset(buf, 1, 1);
 
 	for (size_t i = 0; i < 8; i++) {
+		
 		size_t p_len = 1;
-		void *p_buf = pin_to_mem(parallel[i], &p_len);
+		void *p_buf = pin_to_mem(&parallel[i], &p_len);
 
 		memcpy(buf + total_len, p_buf + 1, p_len - 1);
 
@@ -158,5 +163,9 @@ size_t parallel_to_mem(void *buf, Pin parallel[8]) {
 		free(p_buf);
 	}
 
-	return total_len;
+  if (len != NULL) {
+    *len = total_len;
+  }
+
+	return buf;
 }

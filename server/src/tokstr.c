@@ -3,7 +3,7 @@
 
 #define MAX_ITER 15
 
-char *__tokstr(const char *str, const char delim) {
+char *__tokstr(char *str, const char delim) {
 	static char *input = NULL;
 	
 	if (str != NULL) {
@@ -40,7 +40,7 @@ char *__tokstr(const char *str, const char delim) {
 
 size_t tokstr(char** result, char* str, const char* delim) {
 	if (result == NULL) {
-		return NULL;
+		return 0;
 	}
 
 	size_t delim_len = strlen(delim);

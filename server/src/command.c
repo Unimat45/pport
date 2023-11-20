@@ -2,6 +2,7 @@
 #include "parallel.h"
 #include "tokstr.h"
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -18,14 +19,11 @@
 void free_command(Command *cmd) {
     if (!cmd) {
         return;
-    }
-    if (cmd->label) {
-        free(cmd->label);
-    }
+    } 
     free(cmd);
 }
 
-unsigned char token_command(Command *c, const char* cmd) {
+unsigned char token_command(Command *c, char* cmd) {
     if (c == NULL) {
         return 0;
     }
@@ -124,13 +122,13 @@ tok_err:
     return 0;
 }
 
-void *parse_command(Pin parallel[8], Command* c, size_t* len) {
+void *parse_command(Pin parallel[8], Command* c, size_t *len) {
     switch (c->instruction) {
         case SHOW: {
             if (c->pin == NOPIN || c->pin == ALL) {
-                return parallel_to_mem(len);
+                return parallel_to_mem(parallel, len);
             }
-            return pin_to_mem(parallel[c->pin - 2], len);
+            return pin_to_mem(&parallel[c->pin - 2], len);
         }
         case SET: {
             switch (c->pin) {
@@ -140,7 +138,8 @@ void *parse_command(Pin parallel[8], Command* c, size_t* len) {
             case ALL:
                 outb(0xFF * c->state, PORT);
                 write_to_file(parallel);
-                return parallel_to_mem(len, parallel);
+                
+                return parallel_to_mem(parallel, len);
             default: {
                     uint8_t current_value = inb(PORT);
                     if (c->state) {
@@ -149,24 +148,26 @@ void *parse_command(Pin parallel[8], Command* c, size_t* len) {
                     else {
                         outb(current_value & (0xFF - (1 << (c->pin - 2))), PORT);
                     }
-                    Pin *p = parallel[c->pin - 2];
+                    Pin *p = &parallel[c->pin - 2];
                     p->state = c->state;
 
-                    write_to_file();
+                    write_to_file(parallel);
+
                     return pin_to_mem(p, len);
                 }
             }
         }
         case REBOOT:
             load_parallel_from_file(parallel);
-            return parallel_to_mem(len, parallel);
+
+            return parallel_to_mem(parallel, len);
         case TOGGLE: {
             if (c->pin == NOPIN || c->pin == ALL) {
                 return NULL;
             }
 
             uint8_t current_value = inb(PORT);
-            Pin *p = parallel[c->pin - 2];
+            Pin *p = &parallel[c->pin - 2];
 
             if (p->state) {
                 outb(current_value & (0xFF - (1 << (c->pin - 2))), PORT);
@@ -177,6 +178,7 @@ void *parse_command(Pin parallel[8], Command* c, size_t* len) {
 
             p->state = !p->state;
             write_to_file(parallel);
+
             return pin_to_mem(p, len);
         }
         case LABEL: {
@@ -184,11 +186,12 @@ void *parse_command(Pin parallel[8], Command* c, size_t* len) {
                 return NULL;
             }
 
-            Pin *p = parallel[c->pin - 2];
+            Pin *p = &parallel[c->pin - 2];
 
-            (void)strncpy(p->label, c->label, MAX_LABEL - 1);
+            (void)memcpy(p->label, c->label, strlen(c->label));
 
             write_to_file(parallel);
+            
             return pin_to_mem(p, len);
         }
         default:

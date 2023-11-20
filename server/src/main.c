@@ -12,7 +12,9 @@ int main(void) {
         return 1;
     }
 
-    int errno = initialize_server(SERVER_PORT);
+    Pin parallel[8];
+
+    int errno = initialize_server(SERVER_PORT, parallel);
 
     if (errno != 0) {
         (void)fprintf(stderr, "Error while starting server. Exiting...\n");
@@ -20,7 +22,7 @@ int main(void) {
     }
 
     (void)printf("Server started on port %d\n", SERVER_PORT);
-    start_server();
+    start_server(parallel);
 
     return 0;    
 }
