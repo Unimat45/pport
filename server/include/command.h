@@ -32,7 +32,6 @@ typedef struct {
     char label[261];
 } Command;
 
-void free_command(Command *cmd);
 void *parse_command(Pin parallel[8], Command* c, size_t *len);
 unsigned char token_command(Command *c, char* cmd);
 

@@ -40,8 +40,11 @@ void load_parallel_from_file(Pin parallel[8]) {
 
 		if (config_read(&cfg, fp) == CONFIG_FALSE) {
 			config_destroy(&cfg);
+      fclose(fp);
 			return;
 		}
+
+    fclose(fp);
 
 		pins = config_setting_get_member(cfg.root, "pins");
 
@@ -77,8 +80,6 @@ void load_parallel_from_file(Pin parallel[8]) {
 		outb( value, PORT );
 		config_destroy(&cfg);
 	}
-
-	fclose(fp);
 }
 
 void write_to_file(Pin parallel[8]) {
@@ -107,8 +108,9 @@ void write_to_file(Pin parallel[8]) {
 }
 
 void *pin_to_mem(Pin *p, size_t *len) {
+  p->label[260] = 0;
 	// Allocate 1 more byte for terminator, plus 1 more for "is array"
-	size_t data_len = sizeof(p->state) + sizeof(p->label) + 2;
+	size_t data_len = strlen(p->label) + sizeof(p->state) + 2;
 
 	void *buf = malloc(data_len);
 
@@ -128,7 +130,7 @@ void *pin_to_mem(Pin *p, size_t *len) {
 }
 
 void *parallel_to_mem(Pin parallel[8], size_t *len) {
-	size_t one_max_len = 261;
+	size_t one_max_len = 262;
 	size_t total_len = 1;
 
 	void *buf = malloc(one_max_len * 8 + 1);
@@ -140,7 +142,6 @@ void *parallel_to_mem(Pin parallel[8], size_t *len) {
 	memset(buf, 1, 1);
 
 	for (size_t i = 0; i < 8; i++) {
-		
 		size_t p_len = 1;
 		void *p_buf = pin_to_mem(&parallel[i], &p_len);
 

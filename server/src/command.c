@@ -16,13 +16,6 @@
 #define MAX_ITER 15
 #define MAX_LABEL 260
 
-void free_command(Command *cmd) {
-    if (!cmd) {
-        return;
-    } 
-    free(cmd);
-}
-
 unsigned char token_command(Command *c, char* cmd) {
     if (c == NULL) {
         return 0;
@@ -89,6 +82,7 @@ unsigned char token_command(Command *c, char* cmd) {
         goto tok_err;
     }
 
+    free(token);
     token = tokstr(NULL, ' ');
 
     if (token == NULL) {
@@ -118,7 +112,6 @@ unsigned char token_command(Command *c, char* cmd) {
     size_t len = strlen(c->label) - 1;
     c->label[len] = 0;
 
-    free(token);
     return 1;
 
 tok_err:
