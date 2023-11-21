@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include "json-c/json.h"
-
 #define PORT 0x378
 
 #ifdef _MSC_VER

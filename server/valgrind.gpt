@@ -1,38 +1,64 @@
-==5899== Memcheck, a memory error detector
-==5899== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
-==5899== Using Valgrind-3.21.0 and LibVEX; rerun with -h for copyright info
-==5899== Command: ./bin/pport
-==5899== Parent PID: 5898
-==5899== 
-==5899== 
-==5899== Process terminating with default action of signal 2 (SIGINT)
-==5899==    at 0x49A6487: recvfrom (recvfrom.c:27)
-==5899==    by 0x10A2A1: ??? (in /home/mathieu/Desktop/pport/server/bin/pport)
-==5899==    by 0x10954D: ??? (in /home/mathieu/Desktop/pport/server/bin/pport)
-==5899==    by 0x48A40CF: (below main) (libc_start_call_main.h:58)
-==5899== 
-==5899== HEAP SUMMARY:
-==5899==     in use at exit: 8,869 bytes in 64 blocks
-==5899==   total heap usage: 91 allocs, 27 frees, 15,836 bytes allocated
-==5899== 
-==5899== 7,845 (48 direct, 7,797 indirect) bytes in 1 blocks are definitely lost in loss record 11 of 11
-==5899==    at 0x4845828: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==5899==    by 0x48728DE: json_object_new_object (in /usr/lib/x86_64-linux-gnu/libjson-c.so.5.3.0)
-==5899==    by 0x4873C71: json_tokener_parse_ex (in /usr/lib/x86_64-linux-gnu/libjson-c.so.5.3.0)
-==5899==    by 0x487492A: json_tokener_parse_verbose (in /usr/lib/x86_64-linux-gnu/libjson-c.so.5.3.0)
-==5899==    by 0x4874991: json_tokener_parse (in /usr/lib/x86_64-linux-gnu/libjson-c.so.5.3.0)
-==5899==    by 0x109DE5: ??? (in /home/mathieu/Desktop/pport/server/bin/pport)
-==5899==    by 0x10A1BE: ??? (in /home/mathieu/Desktop/pport/server/bin/pport)
-==5899==    by 0x109527: ??? (in /home/mathieu/Desktop/pport/server/bin/pport)
-==5899==    by 0x48A40CF: (below main) (libc_start_call_main.h:58)
-==5899== 
-==5899== LEAK SUMMARY:
-==5899==    definitely lost: 48 bytes in 1 blocks
-==5899==    indirectly lost: 7,797 bytes in 62 blocks
-==5899==      possibly lost: 0 bytes in 0 blocks
-==5899==    still reachable: 1,024 bytes in 1 blocks
-==5899==         suppressed: 0 bytes in 0 blocks
-==5899== Reachable blocks (those to which a pointer was found) are not shown.
-==5899== To see them, rerun with: --leak-check=full --show-leak-kinds=all
-==5899== 
-==5899== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
+==14823== Memcheck, a memory error detector
+==14823== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
+==14823== Using Valgrind-3.19.0 and LibVEX; rerun with -h for copyright info
+==14823== Command: ./bin/pport
+==14823== Parent PID: 14822
+==14823== 
+==14823== Conditional jump or move depends on uninitialised value(s)
+==14823==    at 0x4846798: strlen (vg_replace_strmem.c:494)
+==14823==    by 0x109C31: pin_to_mem (parallel.c:121)
+==14823==    by 0x109E80: start_server (server.c:65)
+==14823==    by 0x109261: main (main.c:25)
+==14823== 
+==14823== Syscall param socketcall.sendto(msg) points to uninitialised byte(s)
+==14823==    at 0x4D16A93: sendto (sendto.c:27)
+==14823==    by 0x109EAC: start_server (server.c:71)
+==14823==    by 0x109261: main (main.c:25)
+==14823==  Address 0x4df61d7 is 7 bytes inside a block of size 263 alloc'd
+==14823==    at 0x48407B4: malloc (vg_replace_malloc.c:381)
+==14823==    by 0x109C13: pin_to_mem (parallel.c:113)
+==14823==    by 0x109E80: start_server (server.c:65)
+==14823==    by 0x109261: main (main.c:25)
+==14823== 
+==14823== 
+==14823== HEAP SUMMARY:
+==14823==     in use at exit: 2 bytes in 1 blocks
+==14823==   total heap usage: 99 allocs, 98 frees, 26,841 bytes allocated
+==14823== 
+==14823== 2 bytes in 1 blocks are definitely lost in loss record 1 of 1
+==14823==    at 0x48407B4: malloc (vg_replace_malloc.c:381)
+==14823==    by 0x109F77: tokstr (tokstr.c:17)
+==14823==    by 0x1094EE: token_command (command.c:72)
+==14823==    by 0x109E6C: start_server (server.c:57)
+==14823==    by 0x109261: main (main.c:25)
+==14823== 
+==14823== LEAK SUMMARY:
+==14823==    definitely lost: 2 bytes in 1 blocks
+==14823==    indirectly lost: 0 bytes in 0 blocks
+==14823==      possibly lost: 0 bytes in 0 blocks
+==14823==    still reachable: 0 bytes in 0 blocks
+==14823==         suppressed: 0 bytes in 0 blocks
+==14823== 
+==14823== Use --track-origins=yes to see where uninitialised values come from
+==14823== ERROR SUMMARY: 3 errors from 3 contexts (suppressed: 0 from 0)
+==14823== 
+==14823== 1 errors in context 1 of 3:
+==14823== Syscall param socketcall.sendto(msg) points to uninitialised byte(s)
+==14823==    at 0x4D16A93: sendto (sendto.c:27)
+==14823==    by 0x109EAC: start_server (server.c:71)
+==14823==    by 0x109261: main (main.c:25)
+==14823==  Address 0x4df61d7 is 7 bytes inside a block of size 263 alloc'd
+==14823==    at 0x48407B4: malloc (vg_replace_malloc.c:381)
+==14823==    by 0x109C13: pin_to_mem (parallel.c:113)
+==14823==    by 0x109E80: start_server (server.c:65)
+==14823==    by 0x109261: main (main.c:25)
+==14823== 
+==14823== 
+==14823== 1 errors in context 2 of 3:
+==14823== Conditional jump or move depends on uninitialised value(s)
+==14823==    at 0x4846798: strlen (vg_replace_strmem.c:494)
+==14823==    by 0x109C31: pin_to_mem (parallel.c:121)
+==14823==    by 0x109E80: start_server (server.c:65)
+==14823==    by 0x109261: main (main.c:25)
+==14823== 
+==14823== ERROR SUMMARY: 3 errors from 3 contexts (suppressed: 0 from 0)

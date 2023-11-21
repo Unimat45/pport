@@ -4,28 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/io.h>
+#include <libconfig.h>
 
 #define READ_BUF 512
 #define DEFAULT_LABEL "Pin "
 
 #define MIN(a,b) (a > b ? b : a)
-
-char* read_file(FILE *fp, size_t* len) {
-	if (fp == NULL) {
-		return NULL;
-	}
-
-	fseek(fp, 0l, SEEK_END);
-	*len = ftell(fp);
-	rewind(fp);
-
-	char *buf = malloc(*len + 1);
-	*len = fread(buf, 1, *len, fp);
-
-	buf[*len] = 0;
-	
-	return buf;
-}
 
 void load_parallel_from_file(Pin parallel[8]) {
 	FILE *fp = fopen(STATE_FILE, "r");
@@ -40,7 +24,7 @@ void load_parallel_from_file(Pin parallel[8]) {
 			p.label[4] = i + 2 + '0';
 			p.label[5] = 0;
 
-			p.state = (current_value & (1 << i)) & 1;
+			p.state = (current_value & (1 << i)) != 0 ? ON : OFF;
 
 			parallel[i] = p;
 		}
@@ -48,80 +32,83 @@ void load_parallel_from_file(Pin parallel[8]) {
 		write_to_file(parallel);
 	}
 	else {
-		size_t file_len;
-		char *json = read_file(fp, &file_len);
-		uint8_t value = 0;	
+		uint8_t value = 0;
 
-		json_object *data = json_tokener_parse(json);
-		free(json);
+		config_t cfg;
+		config_setting_t *pins;
+		config_init(&cfg);
 
-		json_object* pins = json_object_object_get(data, "pins");
+		if (config_read(&cfg, fp) == CONFIG_FALSE) {
+			config_destroy(&cfg);
+			return;
+		}
 
-		for (size_t i = 0; i < 8; i++) {
-			json_object * p = json_object_array_get_idx(pins, i);
+		pins = config_setting_get_member(cfg.root, "pins");
 
-			json_object* lbl =  json_object_object_get(p, "label");
-			json_object* state =  json_object_object_get(p, "state");
+		if (!pins) {
+			pins = config_setting_add(cfg.root, "pins", CONFIG_TYPE_LIST);
+		}
+
+		size_t count = (size_t)config_setting_length(pins);
+
+		for (size_t i = 0; i < count; i++) {
+			config_setting_t *p = config_setting_get_elem(pins, i);
+
+			const char *lbl;
+			int state;
+
+			if (!(config_setting_lookup_string(p, "label", &lbl) && config_setting_lookup_bool(p, "state", &state))) {
+				perror("Failed to lookup data for pin");
+				continue;
+			}
 
 			Pin pin;
 
-			const char *tmp = json_object_get_string(lbl);
-			size_t str_len = json_object_get_string_len(lbl) + 1;
+			size_t str_len = strlen(lbl);
 
-			memcpy(pin.label, tmp, MIN(str_len, 260));
+			memcpy(pin.label, lbl, str_len);
 
-			pin.state = json_object_get_int(state);
+			pin.state = state;
 
 			value |= (1 << i) * pin.state;
 
 			parallel[i] = pin;
 		}
 		outb( value, PORT );
+		config_destroy(&cfg);
 	}
 
 	fclose(fp);
-}
-
-json_object* pin_to_json(Pin *p) {
-	json_object* obj = json_object_new_object();
-
-	json_object* label = json_object_new_string(p->label);
-	json_object_object_add(obj, "label", label);
-
-	json_object* state = json_object_new_int(p->state);
-	json_object_object_add(obj, "state", state);
-
-	return obj;
 }
 
 void write_to_file(Pin parallel[8]) {
-	json_object *root = json_object_new_object();
-	json_object *pins = json_object_new_array();
+	config_t cfg;
+	config_setting_t *pins, *pin, *setting;
+
+	config_init(&cfg);
+
+	pins = config_setting_add(cfg.root, "pins", CONFIG_TYPE_LIST);
 	
 	for (size_t i = 0; i < 8; i++) {
-		json_object* p = pin_to_json(&parallel[i]);
+		pin = config_setting_add(pins, NULL, CONFIG_TYPE_GROUP);
 
-		json_object_array_add(pins, p);
-	}
-	json_object_object_add(root, "pins", pins);
+		setting = config_setting_add(pin, "label", CONFIG_TYPE_STRING);
+		config_setting_set_string(setting, parallel[i].label);
 
-
-	FILE *fp = fopen(STATE_FILE, "w");
-
-	if (fp == NULL) {
-		fprintf(stderr, "Error creating config file. Exiting...\n");
-		exit(1);
+		setting = config_setting_add(pin, "state", CONFIG_TYPE_BOOL);
+		config_setting_set_bool(setting, parallel[i].state);
 	}
 
-	fprintf(fp, "%s", json_object_to_json_string_ext(root, JSON_C_TO_STRING_PRETTY));
-	fflush(fp);
+	if (!config_write_file(&cfg, STATE_FILE)) {
+		perror("Error writing file");
+	}
 
-	fclose(fp);
+	config_destroy(&cfg);
 }
 
 void *pin_to_mem(Pin *p, size_t *len) {
 	// Allocate 1 more byte for terminator, plus 1 more for "is array"
-	size_t data_len = sizeof(p->state) + strlen(p->label) + 2;
+	size_t data_len = sizeof(p->state) + sizeof(p->label) + 2;
 
 	void *buf = malloc(data_len);
 
@@ -129,13 +116,13 @@ void *pin_to_mem(Pin *p, size_t *len) {
 		return NULL;
 	}
 
-  memset(buf, 0, 1);
-  memcpy(buf + 1, &(p->state), sizeof(p->state));
+	memset(buf, 0, 1);
+	memcpy(buf + 1, &(p->state), sizeof(p->state));
 	memcpy(buf + 1 + sizeof(p->state), p->label, strlen(p->label) + 1);
 
-  if (len != NULL) {
-    *len = data_len;
-  }
+	if (len != NULL) {
+		*len = data_len;
+	}
 
 	return buf;
 }

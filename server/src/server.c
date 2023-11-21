@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <strings.h>
+#include <stdlib.h>
 #include <sys/socket.h>
 
 #define IS_SAME(a,b) (strcasecmp(a,b) == 0)
@@ -65,10 +66,10 @@ void start_server(Pin parallel[8]) {
 
         if (result == NULL) {
             sendto(server_fd, "ERROR: Invalid Syntax", 22, MSG_CONFIRM, (const struct sockaddr *)&client_adr, msg_len);
-            continue;
         }
-
-        sendto(server_fd, result, res_len, MSG_CONFIRM, (const struct sockaddr *)&client_adr, msg_len);
+        else {
+            sendto(server_fd, result, res_len, MSG_CONFIRM, (const struct sockaddr *)&client_adr, msg_len);
+        }
 
         free(result);
     }

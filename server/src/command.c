@@ -28,7 +28,7 @@ unsigned char token_command(Command *c, char* cmd) {
         return 0;
     }
 
-    char *token = __tokstr(cmd, ' ');
+    char *token = tokstr(cmd, ' ');
 
     if (token == NULL) {
         goto tok_err;
@@ -60,15 +60,19 @@ unsigned char token_command(Command *c, char* cmd) {
     }
 
     free(token);
-    token = __tokstr(cmd, ' ');
+    token = tokstr(NULL, ' ');
 
-    if (token == NULL || !IS_SAME(token, "PIN")) {
-        if (token) { free(token); }
-        goto tok_err;
+    if (token == NULL) {
+        return 1;
+    }
+
+    if (!IS_SAME(token, "PIN")) {
+        free(token);
+        return 0;
     }
 
     free(token);
-    token = __tokstr(cmd, ' ');
+    token = tokstr(NULL, ' ');
 
     if (token == NULL) {
         goto tok_err;
@@ -85,10 +89,10 @@ unsigned char token_command(Command *c, char* cmd) {
         goto tok_err;
     }
 
-    token = __tokstr(cmd, ' ');
+    token = tokstr(NULL, ' ');
 
     if (token == NULL) {
-        goto tok_err;
+        return 1;
     }
 
     if (IS_SAME(token, "ON") || IS_SAME(token, "HIGH")) {
@@ -104,7 +108,7 @@ unsigned char token_command(Command *c, char* cmd) {
     
     free(token);
 
-    while ((token = __tokstr(cmd, ' ')) != NULL) {
+    while ((token = tokstr(NULL, ' ')) != NULL) {
         strncat(c->label, token, MAX_LABEL);
         strncat(c->label, " ", MAX_LABEL);
         

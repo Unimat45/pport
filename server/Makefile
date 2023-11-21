@@ -6,7 +6,7 @@ SRC     := src
 BIN     := bin
 EXEC    := pport
 
-LIB     := -ljson-c
+LIB     := -lconfig
 
 all: $(BIN)/$(EXEC)
 
