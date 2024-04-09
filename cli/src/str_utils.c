@@ -26,9 +26,13 @@ size_t read_line(char *const line) {
 
 #else
 
+#include <stdio.h>
+
 size_t read_line(char *const line) {
-    size_t bytesRead = read(2, line, 1024);
+    fgets(line, 1024, stdin);
+    size_t bytesRead = strnlen(line, 1024);
     line[bytesRead - 1] = 0;
+
     return bytesRead;
 }
 

@@ -13,7 +13,8 @@ io_init:
     ret
 
 io_write:
-    mov al, sil
-    out PORT, al
+    mov al, dil
+    mov dx, PORT
+    out dx, al
     xor rax, rax
     ret
