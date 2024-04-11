@@ -27,6 +27,7 @@ size_t read_line(char *const line) {
 #else
 
 #include <stdio.h>
+#include <string.h>
 
 size_t read_line(char *const line) {
     fgets(line, 1024, stdin);
