@@ -1,0 +1,3 @@
+[submodule "server/lib/wsServer"]
+	path = server/lib/wsServer
+	url = https://github.com/Theldus/wsServer.git
