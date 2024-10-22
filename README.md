@@ -43,8 +43,8 @@ The timings section is where things become weird. You can add a timing by click 
 # Installation
 Download the source code and build it using CMake. There is a custom flag to change the config file directory.
 
-    git submodule init
-	cmake -B build -D CFG_FILE=/etc/pport.cfg .
+    git submodule update --init
+	cmake -B build -D CMAKE_BUILD_TYPE=Release -D CFG_FILE=/etc/pport.cfg .
     make -j$(nproc) -C build
     sudo make install
 

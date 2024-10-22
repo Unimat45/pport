@@ -17,10 +17,12 @@ int compareTiming(Timing *a, Timing *b)
 
 Parallel *init_port(void)
 {
-    // if (ioperm(PPORT, 1, 1))
-    // {
-    //     return NULL;
-    // }
+#ifdef NDEBUG
+    if (ioperm(PPORT, 1, 1))
+    {
+        return NULL;
+    }
+#endif
 
     int free_i;
     Parallel *port = NULL;
@@ -65,7 +67,9 @@ Parallel *init_port(void)
     uint8_t value = 0;
     PARA_LOOP(i) { value |= (1 << i) * port[i]->state; }
 
-    // outb(value, PPORT);
+#ifdef NDEBUG
+    outb(value, PPORT);
+#endif
 
     return port;
 

@@ -98,5 +98,7 @@ void config_dump(Parallel *port)
 
     uint8_t value = calculate_value(port);
 
-    // outb(calculate_value(port), PPORT);
+#ifdef NDEBUG
+    outb(calculate_value(port), PPORT);
+#endif
 }
