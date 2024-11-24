@@ -1,19 +1,13 @@
 #include "timings.h"
 #include "config.h"
 #include "parallel.h"
+#include "globals.h"
 
 #include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
-
-#define PARA_LOOP(i) for (int i = 0; i < 8; i++)
-
-#define FIRST_DAY(range) ((range >> 24) & 0xFF)
-#define FIRST_MONTH(range) ((range >> 16) & 0xFF)
-#define LAST_DAY(range) ((range >> 8) & 0xFF)
-#define LAST_MONTH(range) (range & 0xFF)
 
 int needQuit(pthread_mutex_t *mtx)
 {
@@ -40,12 +34,6 @@ void *timings_loop(void *ptr)
     mtx = args->mtx;
     broadcast = args->broadcast;
 
-    {
-        time_t now = time(NULL);
-        struct tm *dt = localtime(&now);
-        sleep(60 - dt->tm_sec);
-    }
-
     while (!needQuit(mtx))
     {
         PARA_LOOP(i)
@@ -68,7 +56,7 @@ void *timings_loop(void *ptr)
                 bool isHour = dt->tm_hour == head->hour;
                 bool isMinute = dt->tm_min == head->minute;
 
-                if (isMonth && isDay && isHour && isMinute)
+                if (isMonth && isDay && isHour && isMinute && dt->tm_sec == 0)
                 {
                     set_state(p, head->state);
                     config_dump(port);
@@ -82,7 +70,7 @@ void *timings_loop(void *ptr)
             }
         }
 
-        sleep(60);
+        sleep(1);
     }
 
     return NULL;

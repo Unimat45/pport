@@ -1,9 +1,6 @@
 #include "config.h"
 #include "parallel.h"
-
-#ifdef NDEBUG
 #include "globals.h"
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,8 +10,6 @@
 #ifndef CFG_FILE
 #define CFG_FILE "pport.cfg"
 #endif
-
-#define PORT_LOOP(i) for (size_t i = 0; i < 8; i++)
 
 int config_load(Parallel *port)
 {
@@ -43,7 +38,7 @@ int config_load(Parallel *port)
     size = fread(buf, 1, size, fd);
     fclose(fd);
 
-    PORT_LOOP(i)
+    PARA_LOOP(i)
     {
         Pin *p = port[i];
 
@@ -79,7 +74,7 @@ int config_load(Parallel *port)
 uint8_t calculate_value(Parallel *port)
 {
     uint8_t value = 0;
-    PORT_LOOP(i) { value |= (1 << i) * port[i]->state; }
+    PARA_LOOP(i) { value |= (1 << i) * port[i]->state; }
 
     return value;
 }
@@ -104,6 +99,6 @@ void config_dump(Parallel *port)
     uint8_t value = calculate_value(port);
 
 #ifdef NDEBUG
-    outb(calculate_value(port), PPORT);
+    outb(value, PPORT);
 #endif
 }

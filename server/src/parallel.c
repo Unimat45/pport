@@ -1,16 +1,11 @@
 #include "parallel.h"
 #include "config.h"
-
-#ifdef NDEBUG
 #include "globals.h"
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/io.h>
-
-#define PARA_LOOP(i) for (int i = 0; i < 8; i++)
 
 int compareTiming(Timing *a, Timing *b)
 {
@@ -223,10 +218,10 @@ size_t serialize_pin(Pin *p, void *restrict data)
     head = p->timings;
     while (head)
     {
-        *buf++ = (head->range >> 24) & 0xFF;
-        *buf++ = (head->range >> 16) & 0xFF;
-        *buf++ = (head->range >> 8) & 0xFF;
-        *buf++ = head->range & 0xFF;
+        *buf++ = FIRST_DAY(head->range);
+        *buf++ = FIRST_MONTH(head->range);
+        *buf++ = LAST_DAY(head->range);
+        *buf++ = LAST_MONTH(head->range);
 
         *buf++ = head->hour;
         *buf++ = head->minute;
