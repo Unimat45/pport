@@ -1,6 +1,9 @@
 #include "parallel.h"
 #include "config.h"
+
+#ifdef NDEBUG
 #include "globals.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +14,7 @@
 
 int compareTiming(Timing *a, Timing *b)
 {
-    return a->months == b->months && a->hour == b->hour &&
+    return a->range == b->range && a->hour == b->hour &&
            a->minute == b->minute && a->state == b->state;
 }
 
@@ -220,8 +223,10 @@ size_t serialize_pin(Pin *p, void *restrict data)
     head = p->timings;
     while (head)
     {
-        *buf++ = (head->months >> 8) & 0xFF;
-        *buf++ = head->months & 0xFF;
+        *buf++ = (head->range >> 24) & 0xFF;
+        *buf++ = (head->range >> 16) & 0xFF;
+        *buf++ = (head->range >> 8) & 0xFF;
+        *buf++ = head->range & 0xFF;
 
         *buf++ = head->hour;
         *buf++ = head->minute;

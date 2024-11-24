@@ -8,10 +8,10 @@
 #define OFF 0
 
 #define MAX_LABEL 64
-#define TIMING_LEN 5
+#define TIMING_LEN sizeof(Timing)
 
 typedef struct Timing {
-    uint16_t months;
+    uint32_t range;
     uint8_t hour;
     uint8_t minute;
     uint8_t state;

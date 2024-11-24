@@ -10,6 +10,11 @@
 
 #define PARA_LOOP(i) for (int i = 0; i < 8; i++)
 
+#define FIRST_DAY(range) ((range >> 24) & 0xFF)
+#define FIRST_MONTH(range) ((range >> 16) & 0xFF)
+#define LAST_DAY(range) ((range >> 8) & 0xFF)
+#define LAST_MONTH(range) (range & 0xFF)
+
 int needQuit(pthread_mutex_t *mtx)
 {
     switch (pthread_mutex_trylock(mtx))
@@ -48,16 +53,22 @@ void *timings_loop(void *ptr)
             time_t now = time(NULL);
             struct tm *dt = localtime(&now);
 
+            // Change months range to 1-12
+            dt->tm_mon++;
+
             Pin *p = port[i];
             Timing *head = p->timings;
 
             while (head != NULL)
             {
-                bool isMonth = head->months & (1 << dt->tm_mon);
+                bool isDay = FIRST_DAY(head->range) <= dt->tm_mday &&
+                             LAST_DAY(head->range) >= dt->tm_mday;
+                bool isMonth = FIRST_MONTH(head->range) <= dt->tm_mon &&
+                               LAST_MONTH(head->range) >= dt->tm_mon;
                 bool isHour = dt->tm_hour == head->hour;
                 bool isMinute = dt->tm_min == head->minute;
 
-                if (isMonth && isHour && isMinute)
+                if (isMonth && isDay && isHour && isMinute)
                 {
                     set_state(p, head->state);
                     config_dump(port);

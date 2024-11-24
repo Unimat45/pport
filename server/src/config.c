@@ -1,6 +1,9 @@
 #include "config.h"
-#include "globals.h"
 #include "parallel.h"
+
+#ifdef NDEBUG
+#include "globals.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,8 +56,10 @@ int config_load(Parallel *port)
         while (*buf != 0 || *(buf + 1) != 0)
         {
             Timing t;
-            t.months = (*buf++) << 8;
-            t.months |= *buf++;
+            t.range = (*buf++) << 24;
+            t.range |= (*buf++) << 16;
+            t.range |= (*buf++) << 8;
+            t.range |= *buf++;
 
             t.hour = *buf++;
             t.minute = *buf++;
