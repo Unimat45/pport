@@ -1,7 +1,11 @@
+#ifdef LOG
+#include "log.h"
+#endif
+
 #include "timings.h"
 #include "config.h"
-#include "parallel.h"
 #include "globals.h"
+#include "parallel.h"
 
 #include <errno.h>
 #include <stdbool.h>
@@ -13,10 +17,12 @@ int needQuit(pthread_mutex_t *mtx)
 {
     switch (pthread_mutex_trylock(mtx))
     {
-    case 0: /* if we got the lock, unlock and return 1 (true) */
+    case 0:
+        /* if we got the lock, loop shall stop */
         pthread_mutex_unlock(mtx);
         return 1;
-    case EBUSY: /* return 0 (false) if the mutex was locked */
+    case EBUSY:
+        /* if locked, loop shall continue */
         return 0;
     }
     return 1;
@@ -64,6 +70,16 @@ void *timings_loop(void *ptr)
                     char data[5120];
                     int ret = parallel_as_mem(port, data);
                     broadcast(data, ret);
+
+#ifdef LOG
+                    log_info("TIMER HIT FOR PIN %d %d %s - %d %s %d:%d %s", i,
+                             FIRST_DAY(head->range),
+                             months[FIRST_MONTH(head->range) - 1],
+                             LAST_DAY(head->range),
+                             months[LAST_MONTH(head->range) - 1], head->hour,
+                             head->minute, head->state ? "ON" : "OFF");
+
+#endif
                 }
 
                 head = head->next;

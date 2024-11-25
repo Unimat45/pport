@@ -12,4 +12,8 @@
 #define LAST_DAY(range) ((range >> 8) & 0xFF)
 #define LAST_MONTH(range) (range & 0xFF)
 
+static char *months[] = {"JANVIER",   "FÉVRIER", "MARS",     "AVRIL",
+                         "MAI",       "JUIN",    "JUILLET",  "AOÛT",
+                         "SEPTEMBRE", "OCTOBRE", "NOVEMBRE", "DÉCEMBRE"};
+
 #endif // GLOBALS_H

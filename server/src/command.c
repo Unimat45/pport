@@ -1,15 +1,83 @@
 #include "command.h"
 #include "config.h"
+#include "globals.h"
 #include "parallel.h"
+
+#ifdef LOG
+#include "log.h"
+#endif
+
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 
 #define min(a, b) (a < b ? a : b)
 
 static char err_pinNbr[] = "The pin number must be between 2 and 9";
 static char err_payloadMem[] = "Not enough memory";
 static char err_wrongInstruction[] = "ERROR: Invalid action";
+
+void command_tostring(AST *ast, char *cmd)
+{
+    switch (ast->action)
+    {
+    case Show:
+        // Strcpy is ok here, since static string are always NULL-terminated
+        strcpy(cmd, "SHOW");
+        break;
+    case Set:
+        sprintf(cmd, "SET PIN %d %s", ast->pin,
+                *((uint8_t *)ast->payload) ? "ON" : "OFF");
+        break;
+    case Label:
+        sprintf(cmd, "LABEL PIN %d %s", ast->pin, (char *)ast->payload);
+        break;
+    case Toggle:
+        sprintf(cmd, "TOGGLE PIN %d", ast->pin);
+        break;
+    case Timings:
+    {
+        uint8_t *payload = (uint8_t *)ast->payload;
+        uint8_t pin = ast->pin - 2;
+        size_t written = 0;
+        for (size_t i = 0; i < ast->payload_size; i += TIMING_LEN)
+        {
+            Timing t;
+            t.range = (payload[i] << 24) | (payload[i + 1] << 16) |
+                      (payload[i + 2] << 8) | (payload[i + 3]);
+            t.hour = (payload[i + 4]);
+            t.minute = (payload[i + 5]);
+            t.state = (payload[i + 6]);
+            t.next = NULL;
+            written += sprintf(cmd, "TIMINGS PIN %d %d %s - %d %s %d:%d %s\n",
+                               ast->pin, FIRST_DAY(t.range),
+                               months[FIRST_MONTH(t.range) - 1], LAST_DAY(t.range),
+                               months[LAST_MONTH(t.range) - 1], t.hour, t.minute,
+                               t.state ? "ON" : "OFF");
+        }
+
+        memset(cmd + written - 1, 0, 1);
+    }
+    break;
+    case DeleteTimings:
+        sprintf(cmd, "DELETE ALL TIMINGS FOR PIN %d", ast->pin);
+        break;
+    case DeleteTiming:
+    {
+        Timing t;
+        memcpy(&t, (char *)ast->payload, TIMING_LEN);
+        t.next = NULL;
+        sprintf(cmd, "DELETE TIMING FOR PIN %d %d %s - %d %s %d:%d %s",
+                ast->pin, FIRST_DAY(t.range), months[FIRST_MONTH(t.range) - 1],
+                LAST_DAY(t.range), months[LAST_MONTH(t.range) - 1], t.hour,
+                t.minute, t.state ? "ON" : "OFF");
+    }
+    break;
+    default:
+        break;
+    };
+}
 
 int command_parse(void *cmd, size_t cmd_size, AST *restrict ast, char **errMsg)
 {
@@ -52,6 +120,7 @@ int command_parse(void *cmd, size_t cmd_size, AST *restrict ast, char **errMsg)
 
     memcpy(ast->payload, buf, capped_size);
     ast->payload_size = capped_size;
+    memset(ast->payload + capped_size, 0, 1);
 
     return 1;
 }
@@ -145,6 +214,15 @@ size_t command_exec(AST *ast, Parallel *port, void *restrict data,
     }
     break;
     };
+
+#ifdef LOG
+    {
+        char command[1024];
+        command_tostring(ast, command);
+
+        log_info("%s", command);
+    }
+#endif
 
     if (ast->payload)
     {
