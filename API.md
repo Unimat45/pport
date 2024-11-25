@@ -39,13 +39,12 @@ except for `Show`. They also require a certain payload, described here:
 * Set: `0` for low, and `1` high
 * Toggle: No payload
 * Label: A string represented as bytes, terminated by a `0` (Ex: "Hello" => { 'H', 'e', 'l', 'l', 'o', 0 })
-* Timings: 2 bytes representing the months in a big endian layout, followed by the hour, minutes, and state, each being 1 byte
+* Timings: 4 bytes representing the start day, start month, end day, end month in a big endian layout, followed by the hour, minutes, and state, each being 1 byte
 * DeleteTimings: No payload
 * DeleteTiming: 2 bytes representing the months in a big endian layout, followed by the hour, minutes, and state, each being 1 byte
 
-The months are represented by a 16 bit number, where each month is a bit from left to rigth.
-January can be represented by the number `0b1`, and December by `0b100000000000`. So combining multiple
-months, like April to July, is represented this way `0b00000 01111000`, or `{ 0, 0x78 }`.
+The range is represented by a 32 bit number, where the 2 first bytes are the start of the range and the last 2 are the end of the range.
+January 15th can be represented by the number `0x0F01`, and December 31st by `0x1F0C`. So, the complete range would like `0x0F011F0C`.
 
 If an error has occured during the processing of an action, a string message is returned describing the error,
 otherwise, a serialized version of the port is send as a binary message under this format:

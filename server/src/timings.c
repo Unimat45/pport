@@ -1,14 +1,13 @@
 #include "timings.h"
 #include "config.h"
 #include "parallel.h"
+#include "globals.h"
 
 #include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
-
-#define PARA_LOOP(i) for (int i = 0; i < 8; i++)
 
 int needQuit(pthread_mutex_t *mtx)
 {
@@ -35,12 +34,6 @@ void *timings_loop(void *ptr)
     mtx = args->mtx;
     broadcast = args->broadcast;
 
-    {
-        time_t now = time(NULL);
-        struct tm *dt = localtime(&now);
-        sleep(60 - dt->tm_sec);
-    }
-
     while (!needQuit(mtx))
     {
         PARA_LOOP(i)
@@ -48,16 +41,22 @@ void *timings_loop(void *ptr)
             time_t now = time(NULL);
             struct tm *dt = localtime(&now);
 
+            // Change months range to 1-12
+            dt->tm_mon++;
+
             Pin *p = port[i];
             Timing *head = p->timings;
 
             while (head != NULL)
             {
-                bool isMonth = head->months & (1 << dt->tm_mon);
+                bool isDay = FIRST_DAY(head->range) <= dt->tm_mday &&
+                             LAST_DAY(head->range) >= dt->tm_mday;
+                bool isMonth = FIRST_MONTH(head->range) <= dt->tm_mon &&
+                               LAST_MONTH(head->range) >= dt->tm_mon;
                 bool isHour = dt->tm_hour == head->hour;
                 bool isMinute = dt->tm_min == head->minute;
 
-                if (isMonth && isHour && isMinute)
+                if (isMonth && isDay && isHour && isMinute && dt->tm_sec == 0)
                 {
                     set_state(p, head->state);
                     config_dump(port);
@@ -71,7 +70,7 @@ void *timings_loop(void *ptr)
             }
         }
 
-        sleep(60);
+        sleep(1);
     }
 
     return NULL;

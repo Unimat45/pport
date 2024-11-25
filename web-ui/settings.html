@@ -3,8 +3,8 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
-        <link rel="manifest" href="/manifest.json">
+		<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+		<link rel="manifest" href="/manifest.json" />
 		<link rel="stylesheet" href="/css/settings.css" />
 		<script type="module" src="/js/settings.js"></script>
 		<title>Timers</title>
@@ -50,6 +50,7 @@
 				<button id="state">Éteint</button>
 			</div>
 			<div class="timings">
+
 				<button class="add-timing">&plus;</button>
 			</div>
 			<button class="save-timing">Sauvegarder</button>
@@ -58,28 +59,47 @@
 	</body>
 
 	<template id="tm-temp">
-		<div class="timing">
-			<button class="delete">&times;</button>
-			<div class="months">
-				<button>Jan</button>
-				<button>Fév</button>
-				<button>Mar</button>
-				<button>Avr</button>
-				<button>Mai</button>
-				<button>Jun</button>
-				<button>Jui</button>
-				<button>Aoû</button>
-				<button>Sep</button>
-				<button>Oct</button>
-				<button>Nov</button>
-				<button>Déc</button>
-			</div>
-			<input class="time" type="time" name="time" value="00:00" />
-			<select name="state" class="state">
-				<option value="1">Allumé</option>
-				<option value="0">Éteint</option>
-			</select>
-			<div class="separator"></div>
-		</div>
+        <div class="timing">
+            <div class="months">
+                <select name="day1" class="day1"></select>
+                <select class="month1" name="month1">
+                    <option value="1">Janvier</option>
+                    <option value="2">Févier</option>
+                    <option value="3">Mars</option>
+                    <option value="4">Avril</option>
+                    <option value="5">Mai</option>
+                    <option value="6">Juin</option>
+                    <option value="7">Juillet</option>
+                    <option value="8">Août</option>
+                    <option value="9">Septembre</option>
+                    <option value="10">Octobre</option>
+                    <option value="11">Novembre</option>
+                    <option value="12">Décembre</option>
+                </select>
+                -
+                <select name="day2" class="day2"></select>
+                <select class="month2" name="month2">
+                    <option value="1">Janvier</option>
+                    <option value="2">Févier</option>
+                    <option value="3">Mars</option>
+                    <option value="4">Avril</option>
+                    <option value="5">Mai</option>
+                    <option value="6">Juin</option>
+                    <option value="7">Juillet</option>
+                    <option value="8">Août</option>
+                    <option value="9">Septembre</option>
+                    <option value="10">Octobre</option>
+                    <option value="11">Novembre</option>
+                    <option value="12">Décembre</option>
+                </select>
+            </div>
+            <input class="time" type="time" name="time" value="00:00" />
+            <select name="state" class="state">
+                <option value="1">Allumé</option>
+                <option value="0">Éteint</option>
+            </select>
+            <button class="delete">&times;</button>
+            <div class="separator"></div>
+        </div>
 	</template>
 </html>

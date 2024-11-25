@@ -7,11 +7,9 @@
 #include <string.h>
 #include <sys/io.h>
 
-#define PARA_LOOP(i) for (int i = 0; i < 8; i++)
-
 int compareTiming(Timing *a, Timing *b)
 {
-    return a->months == b->months && a->hour == b->hour &&
+    return a->range == b->range && a->hour == b->hour &&
            a->minute == b->minute && a->state == b->state;
 }
 
@@ -220,8 +218,10 @@ size_t serialize_pin(Pin *p, void *restrict data)
     head = p->timings;
     while (head)
     {
-        *buf++ = (head->months >> 8) & 0xFF;
-        *buf++ = head->months & 0xFF;
+        *buf++ = FIRST_DAY(head->range);
+        *buf++ = FIRST_MONTH(head->range);
+        *buf++ = LAST_DAY(head->range);
+        *buf++ = LAST_MONTH(head->range);
 
         *buf++ = head->hour;
         *buf++ = head->minute;
