@@ -38,7 +38,7 @@ Index page is prety simple, 8 switches. Just click on a switch to toggle it
 
 The settings page is a bit more complicated. The top is the simpler part, it is pretty much the same as the index page, but you can change the pin label by clicking it. It will save once you click away from the input.
 
-The timings section is where things become weird. You can add a timing by click the + button. In this new timing, you can specify which months you want it to execute, the time it should execute and whether you want to turn on or off this pin. **No changes will be made unless you click the `Save` button.**
+The timings section is where things become weird. You can add a timing by click the + button. In this new timing, you can specify a day and month range you want it to execute, the time it should execute and whether you want to turn on or off this pin. **No changes will be made unless you click the `Save` button.**
 
 # Installation
 Download the source code and build it using CMake. There is a custom flag to change the config file directory.
@@ -50,7 +50,6 @@ Download the source code and build it using CMake. There is a custom flag to cha
 
 # TODO
 
-1. Fix the months selection to accept month gaps in the same timing
-2. Better handling of the label input
-3. Better handling of the timing loop
-4. Add compile flag for WebSocket port
+1. Better handling of the label input
+2. Better handling of the timing loop
+3. Add compile flag for WebSocket port

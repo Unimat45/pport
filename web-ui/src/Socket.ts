@@ -1,4 +1,4 @@
-export type Timing = { state: boolean; months: number; hour: number; min: number };
+export type Timing = { state: boolean; range: number; hour: number; min: number };
 type Pin = { state: boolean; label: string; timings: Timing[] };
 type MessageCallback = (data: Pin[], error: string | null) => void;
 
@@ -49,13 +49,13 @@ class Socket extends WebSocket {
 				let base = buf_i + 2 + lbl_len;
 				while (buf[base] !== 0 || buf[base + 1] !== 0) {
 					p.timings.push({
-						months: (buf[base] << 8) | buf[base + 1],
-						hour: buf[base + 2],
-						min: buf[base + 3],
-						state: buf[base + 4] === 1,
+						range: (buf[base] << 24) | (buf[base + 1] << 16) |(buf[base + 2] << 8) | buf[base + 3],
+						hour: buf[base + 4],
+						min: buf[base + 5],
+						state: buf[base + 6] === 1,
 					});
 
-					base += 5;
+					base += 7;
 				}
 
 				parallel.push(p);
@@ -86,7 +86,7 @@ class Socket extends WebSocket {
 	}
 
 	public addTiming(pin: number, timing: Timing) {
-		this.send(new Uint8Array([Action.Timings, pin + 2, (timing.months >> 8) & 0xff, timing.months & 0xff, timing.hour, timing.min, Number(timing.state)]));
+		this.send(new Uint8Array([Action.Timings, pin + 2, (timing.range >> 24) & 0xff, (timing.range >> 16) & 0xff, (timing.range >> 8) & 0xff, timing.range & 0xff, timing.hour, timing.min, Number(timing.state)]));
 	}
 
 	public removeTimings(pin: number) {

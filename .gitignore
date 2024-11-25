@@ -2,3 +2,6 @@ build/
 .cache/
 .vs/
 .vscode/
+js/
+tsconfig.tsbuildinfo
+pport_config.cfg

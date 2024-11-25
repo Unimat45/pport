@@ -1,7 +1,8 @@
-#include "command.h"
 #include "log.h"
-#include "parallel.h"
+#include "command.h"
 #include "timings.h"
+#include "parallel.h"
+
 #include <pthread.h>
 #include <stdio.h>
 #include <ws.h>
@@ -40,7 +41,6 @@ void onMessage(ws_cli_conn_t client, const uint8_t *cmd, uint64_t size,
         return;
     }
 
-    // log_info("%s", ws_getaddress(client));
     ws_sendframe_bin_bcast(5663, (const char *)data, len);
 }
 

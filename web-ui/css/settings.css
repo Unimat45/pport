@@ -27,7 +27,7 @@ html {
 }
 
 body {
-    overflow-x: hidden;
+	overflow-x: hidden;
 	padding: var(--pad);
 
 	color: var(--fg);
@@ -48,29 +48,36 @@ body.dark {
 }
 
 header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+input,
+select {
+	-webkit-appearance: none;
+	-moz-appearance: none;
+    appearance: none;
 }
 
 #alert {
-    position: absolute;
-    top: -110%;
-    left: 0;
-    right: 0;
+	position: absolute;
+	top: -110%;
+	left: 0;
+	right: 0;
 
-    color: #333333;
-    background-color: var(--off);
-    width: 100%;
-    padding: var(--pad);
+	color: #333333;
+	background-color: var(--off);
+	width: 100%;
+	padding: var(--pad);
 
-    text-align: center;
+	text-align: center;
 
-    transition: top 500ms ease-in-out;
+	transition: top 500ms ease-in-out;
 }
 
 #alert.show {
-    top: 0;
+	top: 0;
 }
 
 #btn-dark {
@@ -91,11 +98,11 @@ header {
 }
 
 .back {
-    display: block;
-    width: 5rem;
+	display: block;
+	width: 5rem;
 
-    border: none;
-    background: none;
+	border: none;
+	background: none;
 }
 
 .container {
@@ -125,7 +132,7 @@ header {
 }
 
 #title input {
-    color: var(--fg);
+	color: var(--fg);
 	background: none;
 	border: 1px solid var(--alt-light);
 	padding: var(--pad);
@@ -183,12 +190,14 @@ header {
 .months {
 	display: grid;
 	gap: 0.25rem;
-	grid-template-columns: repeat(3, 1fr);
+	grid-template-columns: repeat(5, 1fr);
+	place-items: center;
+	font-size: 1rem;
 }
 
 .save-timing,
 .add-timing,
-.months button {
+.months select {
 	padding: var(--pad);
 
 	color: var(--fg);
@@ -197,14 +206,19 @@ header {
 	cursor: pointer;
 	border-radius: 1rem;
 	border: 2px ridge var(--fg);
+    text-align: center;
+    text-align-last: center;
 
 	transition: background-color 300ms ease-in-out, color 300ms ease-in-out, border-color 300ms ease-in-out;
 }
 
+.months select {
+	padding: calc(var(--pad) * .75);
+    border-radius: .5rem;
+}
+
 .save-timing:hover,
-.add-timing:hover,
-.months button:hover,
-.months button.on {
+.add-timing:hover {
 	color: var(--bg);
 	border-color: var(--bg);
 	background-color: var(--fg);
@@ -225,15 +239,19 @@ header {
 
 	color: var(--fg);
 	background-color: var(--bg);
+    text-align: center;
+    text-align-last: center;
 }
 
 .delete {
-	font-size: 5rem;
-	position: absolute;
+	font-size: 3.5rem;
+    vertical-align: middle;
+    line-height: 1;
 	top: 0;
 	bottom: 0;
 	left: 0;
-	transform: translateX(-125%);
+
+    position: static;
 
 	cursor: pointer;
 
@@ -253,15 +271,11 @@ header {
 		top: var(--pad);
 		right: var(--pad);
 	}
-    
-    .back {
-        position: absolute;
-        top: var(--pad);
-        left: var(--pad);
-    }
 
-	.months {
-		grid-template-columns: repeat(6, 1fr);
+	.back {
+		position: absolute;
+		top: var(--pad);
+		left: var(--pad);
 	}
 
 	.timings {
@@ -273,9 +287,18 @@ header {
 		flex-direction: row;
 	}
 
+    .delete {
+        position: absolute;
+        transform: translateX(-150%);
+    }
+
 	.separator {
 		display: none;
 	}
+
+    .months select {
+        padding: var(--pad);
+    }
 
 	.time {
 		align-self: initial;
