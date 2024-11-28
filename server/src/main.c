@@ -95,7 +95,7 @@ size_t onBaseRequest(const char *req, size_t req_len, char **res)
         return sizeof(notFound) - 1;
     }
 
-    ws_sendframe_bin_bcast(5663, (const char *)data, len);
+    ws_sendframe_bin_bcast(5663, (const char *)data, resLen);
 
     *res = malloc(sizeof(ok) - 1);
     memcpy(*res, ok, sizeof(ok) - 1);
