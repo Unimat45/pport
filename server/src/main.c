@@ -1,10 +1,12 @@
-#include "log.h"
 #include "command.h"
-#include "timings.h"
+#include "log.h"
 #include "parallel.h"
+#include "timings.h"
 
 #include <pthread.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <ws.h>
 
 Parallel *port = NULL;
@@ -44,6 +46,62 @@ void onMessage(ws_cli_conn_t client, const uint8_t *cmd, uint64_t size,
     ws_sendframe_bin_bcast(5663, (const char *)data, len);
 }
 
+size_t onBaseRequest(const char *req, size_t req_len, char **res)
+{
+    static const char notFound[] =
+        "HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n";
+    static const char ok[] = "HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n";
+
+    char *p = strchr(req, ' ') + 1;
+    size_t len = strchr(p, ' ') - p - 1;
+
+    if (len != 10)
+    {
+        *res = malloc(sizeof(notFound) - 1);
+        memcpy(*res, notFound, sizeof(notFound) - 1);
+        return sizeof(notFound) - 1;
+    }
+
+    if (memcmp(p, "/toggle?p=", len - 1) != 0)
+    {
+        *res = malloc(sizeof(notFound) - 1);
+        memcpy(*res, notFound, sizeof(notFound) - 1);
+        return sizeof(notFound) - 1;
+    }
+
+    int pin = *(p + 10) - '0';
+
+    AST ast;
+    char *errMsg;
+
+    uint8_t cmd[] = { Toggle, pin };
+    int ret = command_parse((void *)cmd, 2, &ast, &errMsg);
+
+    if (!ret)
+    {
+        log_error("%s", errMsg);
+        *res = malloc(sizeof(notFound) - 1);
+        memcpy(*res, notFound, sizeof(notFound) - 1);
+        return sizeof(notFound) - 1;
+    }
+
+    uint8_t data[5120];
+    size_t resLen = command_exec(&ast, port, data, &errMsg);
+
+    if (resLen < 1)
+    {
+        *res = malloc(sizeof(notFound) - 1);
+        memcpy(*res, notFound, sizeof(notFound) - 1);
+        return sizeof(notFound) - 1;
+    }
+
+    ws_sendframe_bin_bcast(5663, (const char *)data, len);
+
+    *res = malloc(sizeof(ok) - 1);
+    memcpy(*res, ok, sizeof(ok) - 1);
+    return sizeof(ok) - 1;
+}
+
 int main(void)
 {
     port = init_port();
@@ -64,6 +122,7 @@ int main(void)
     (void)pthread_create(&th1, NULL, &timings_loop, &args);
 
     ws_socket(&(struct ws_server){
+        .path = "/",
         .host = "0.0.0.0",
         .port = 5663,
         .thread_loop = 0,
@@ -71,6 +130,7 @@ int main(void)
         .evs.onmessage = &onMessage,
         .evs.onopen = &onOpenClose,
         .evs.onclose = &onOpenClose,
+        .evs.onbaserequest = &onBaseRequest,
     });
 
     pthread_mutex_unlock(&mtx);
