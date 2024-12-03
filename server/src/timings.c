@@ -41,18 +41,6 @@ int8_t compareDates(struct tm *a, struct tm *b)
         goto end;
 
     diff = b->tm_mday - a->tm_mday;
-    if (diff != 0)
-        goto end;
-
-    diff = b->tm_hour - a->tm_hour;
-    if (diff != 0)
-        goto end;
-
-    diff = b->tm_min - a->tm_min;
-    if (diff != 0)
-        goto end;
-
-    diff = b->tm_sec - a->tm_sec;
 
 end:
     return diff;
@@ -86,8 +74,8 @@ void *timings_loop(void *ptr)
             while (head != NULL)
             {
                 struct tm first = {0,
-                                   head->minute,
-                                   head->hour,
+                                   0,
+                                   0,
                                    head->range.first_day,
                                    head->range.first_month,
                                    dt->tm_year,
@@ -97,8 +85,8 @@ void *timings_loop(void *ptr)
                                    0,
                                    NULL};
                 struct tm last = {0,
-                                  head->minute,
-                                  head->hour,
+                                  0,
+                                  0,
                                   head->range.last_day,
                                   head->range.last_month,
                                   dt->tm_year,
@@ -108,8 +96,13 @@ void *timings_loop(void *ptr)
                                   0,
                                   NULL};
 
-                if (compareDates(dt, &first) <= 0 &&
-                    compareDates(dt, &last) >= 0 && dt->tm_sec == 0)
+                bool isDay = compareDates(dt, &first) <= 0 &&
+                             compareDates(dt, &last) >= 0;
+
+                bool isHour = dt->tm_hour == head->hour;
+                bool isMinute = dt->tm_min == head->minute;
+
+                if (isDay && isHour && isMinute && dt->tm_sec == 0)
                 {
                     set_state(p, head->state);
                     config_dump(port);
@@ -120,7 +113,7 @@ void *timings_loop(void *ptr)
 
 #ifdef LOG
                     log_info("TIMER HIT FOR PIN %d %d %s - %d %s %02d:%02d %s",
-                             i, head->range.first_day,
+                             i + 2, head->range.first_day,
                              months[head->range.first_month - 1],
                              head->range.last_day,
                              months[head->range.last_month - 1], head->hour,
