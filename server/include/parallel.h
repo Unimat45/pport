@@ -11,7 +11,15 @@
 #define TIMING_LEN sizeof(Timing)
 
 typedef struct Timing {
-    uint32_t range;
+    union {
+        struct {
+            uint8_t last_month;
+            uint8_t last_day;
+            uint8_t first_month;
+            uint8_t first_day;
+        };
+        uint32_t mixed;
+    } range;
     uint8_t hour;
     uint8_t minute;
     uint8_t state;

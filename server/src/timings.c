@@ -2,10 +2,10 @@
 #include "log.h"
 #endif
 
-#include "timings.h"
 #include "config.h"
 #include "globals.h"
 #include "parallel.h"
+#include "timings.h"
 
 #include <errno.h>
 #include <stdbool.h>
@@ -26,6 +26,36 @@ int needQuit(pthread_mutex_t *mtx)
         return 0;
     }
     return 1;
+}
+
+int8_t compareDates(struct tm *a, struct tm *b)
+{
+    int diff = 0;
+
+    diff = b->tm_year - a->tm_year;
+    if (diff != 0)
+        goto end;
+
+    diff = b->tm_mon - a->tm_mon;
+    if (diff != 0)
+        goto end;
+
+    diff = b->tm_mday - a->tm_mday;
+    if (diff != 0)
+        goto end;
+
+    diff = b->tm_hour - a->tm_hour;
+    if (diff != 0)
+        goto end;
+
+    diff = b->tm_min - a->tm_min;
+    if (diff != 0)
+        goto end;
+
+    diff = b->tm_sec - a->tm_sec;
+
+end:
+    return diff;
 }
 
 void *timings_loop(void *ptr)
@@ -55,14 +85,31 @@ void *timings_loop(void *ptr)
 
             while (head != NULL)
             {
-                bool isDay = FIRST_DAY(head->range) <= dt->tm_mday &&
-                             LAST_DAY(head->range) >= dt->tm_mday;
-                bool isMonth = FIRST_MONTH(head->range) <= dt->tm_mon &&
-                               LAST_MONTH(head->range) >= dt->tm_mon;
-                bool isHour = dt->tm_hour == head->hour;
-                bool isMinute = dt->tm_min == head->minute;
+                struct tm first = {0,
+                                   head->minute,
+                                   head->hour,
+                                   head->range.first_day,
+                                   head->range.first_month,
+                                   dt->tm_year,
+                                   0,
+                                   0,
+                                   0,
+                                   0,
+                                   NULL};
+                struct tm last = {0,
+                                  head->minute,
+                                  head->hour,
+                                  head->range.last_day,
+                                  head->range.last_month,
+                                  dt->tm_year,
+                                  0,
+                                  0,
+                                  0,
+                                  0,
+                                  NULL};
 
-                if (isMonth && isDay && isHour && isMinute && dt->tm_sec == 0)
+                if (compareDates(dt, &first) <= 0 &&
+                    compareDates(dt, &last) >= 0 && dt->tm_sec == 0)
                 {
                     set_state(p, head->state);
                     config_dump(port);
@@ -72,11 +119,11 @@ void *timings_loop(void *ptr)
                     broadcast(data, ret);
 
 #ifdef LOG
-                    log_info("TIMER HIT FOR PIN %d %d %s - %d %s %d:%d %s", i,
-                             FIRST_DAY(head->range),
-                             months[FIRST_MONTH(head->range) - 1],
-                             LAST_DAY(head->range),
-                             months[LAST_MONTH(head->range) - 1], head->hour,
+                    log_info("TIMER HIT FOR PIN %d %d %s - %d %s %02d:%02d %s",
+                             i, head->range.first_day,
+                             months[head->range.first_month - 1],
+                             head->range.last_day,
+                             months[head->range.last_month - 1], head->hour,
                              head->minute, head->state ? "ON" : "OFF");
 
 #endif
