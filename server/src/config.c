@@ -1,6 +1,7 @@
 #include "config.h"
-#include "parallel.h"
 #include "globals.h"
+#include "parallel.h"
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,10 +52,10 @@ int config_load(Parallel *port)
         while (*buf != 0 || *(buf + 1) != 0)
         {
             Timing t;
-            t.range = (*buf++) << 24;
-            t.range |= (*buf++) << 16;
-            t.range |= (*buf++) << 8;
-            t.range |= *buf++;
+            t.range.first_day = *buf++;
+            t.range.first_month = *buf++;
+            t.range.last_day = *buf++;
+            t.range.last_month = *buf++;
 
             t.hour = *buf++;
             t.minute = *buf++;

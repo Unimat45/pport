@@ -7,7 +7,6 @@
 #include "log.h"
 #endif
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,17 +43,17 @@ void command_tostring(AST *ast, char *cmd)
         for (size_t i = 0; i < ast->payload_size; i += TIMING_LEN)
         {
             Timing t;
-            t.range = (payload[i] << 24) | (payload[i + 1] << 16) |
-                      (payload[i + 2] << 8) | (payload[i + 3]);
+            t.range.mixed = (payload[i] << 24) | (payload[i + 1] << 16) |
+                            (payload[i + 2] << 8) | (payload[i + 3]);
             t.hour = (payload[i + 4]);
             t.minute = (payload[i + 5]);
             t.state = (payload[i + 6]);
             t.next = NULL;
-            written += sprintf(cmd, "TIMINGS PIN %d %d %s - %d %s %d:%d %s\n",
-                               ast->pin, FIRST_DAY(t.range),
-                               months[FIRST_MONTH(t.range) - 1], LAST_DAY(t.range),
-                               months[LAST_MONTH(t.range) - 1], t.hour, t.minute,
-                               t.state ? "ON" : "OFF");
+            written += sprintf(cmd, "TIMINGS PIN %d %d %s - %d %s %02d:%02d %s\n",
+                               ast->pin, t.range.first_day,
+                               months[t.range.first_month - 1],
+                               t.range.last_day, months[t.range.last_month - 1],
+                               t.hour, t.minute, t.state ? "ON" : "OFF");
         }
 
         memset(cmd + written - 1, 0, 1);
@@ -68,9 +67,9 @@ void command_tostring(AST *ast, char *cmd)
         Timing t;
         memcpy(&t, (char *)ast->payload, TIMING_LEN);
         t.next = NULL;
-        sprintf(cmd, "DELETE TIMING FOR PIN %d %d %s - %d %s %d:%d %s",
-                ast->pin, FIRST_DAY(t.range), months[FIRST_MONTH(t.range) - 1],
-                LAST_DAY(t.range), months[LAST_MONTH(t.range) - 1], t.hour,
+        sprintf(cmd, "DELETE TIMING FOR PIN %d %d %s - %d %s %02d:%02d %s",
+                ast->pin, t.range.first_day, months[t.range.first_month - 1],
+                t.range.last_day, months[t.range.last_month - 1], t.hour,
                 t.minute, t.state ? "ON" : "OFF");
     }
     break;
@@ -168,8 +167,8 @@ size_t command_exec(AST *ast, Parallel *port, void *restrict data,
         for (size_t i = 0; i < ast->payload_size; i += TIMING_LEN)
         {
             Timing t;
-            t.range = (payload[i] << 24) | (payload[i + 1] << 16) |
-                      (payload[i + 2] << 8) | (payload[i + 3]);
+            t.range.mixed = (payload[i] << 24) | (payload[i + 1] << 16) |
+                            (payload[i + 2] << 8) | (payload[i + 3]);
             t.hour = (payload[i + 4]);
             t.minute = (payload[i + 5]);
             t.state = (payload[i + 6]);

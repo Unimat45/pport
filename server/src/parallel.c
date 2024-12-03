@@ -9,7 +9,7 @@
 
 int compareTiming(Timing *a, Timing *b)
 {
-    return a->range == b->range && a->hour == b->hour &&
+    return a->range.mixed == b->range.mixed && a->hour == b->hour &&
            a->minute == b->minute && a->state == b->state;
 }
 
@@ -218,10 +218,10 @@ size_t serialize_pin(Pin *p, void *restrict data)
     head = p->timings;
     while (head)
     {
-        *buf++ = FIRST_DAY(head->range);
-        *buf++ = FIRST_MONTH(head->range);
-        *buf++ = LAST_DAY(head->range);
-        *buf++ = LAST_MONTH(head->range);
+        *buf++ = head->range.first_day;
+        *buf++ = head->range.first_month;
+        *buf++ = head->range.last_day;
+        *buf++ = head->range.last_month;
 
         *buf++ = head->hour;
         *buf++ = head->minute;
