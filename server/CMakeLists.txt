@@ -4,7 +4,7 @@ project(pportd LANGUAGES C VERSION 2.0.0)
 
 set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Type of build")
 set(LOG ON CACHE BOOL "Should log queries")
-set(CFG_FILE "pport_config.cfg" CACHE FILEPATH "Path of config file")
+set(CFG_FILE "pport.cfg" CACHE FILEPATH "Path of config file")
 
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT UNIX)
     message(FATAL_ERROR "This program can only be compiled on linux")
