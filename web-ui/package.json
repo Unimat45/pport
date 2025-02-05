@@ -1,0 +1,20 @@
+{
+	"name": "web-ui",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "tsc && vite build",
+		"preview": "vite preview"
+	},
+	"devDependencies": {
+		"@types/node": "^22.13.1",
+		"terser": "^5.37.0",
+		"typescript": "~5.6.2",
+		"vite": "^6.0.5"
+	},
+	"dependencies": {
+		"@vitejs/plugin-legacy": "^6.0.0"
+	}
+}

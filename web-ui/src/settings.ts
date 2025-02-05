@@ -1,49 +1,20 @@
-import Socket from "./Socket.js";
+import { ws } from "./global";
 
-(() => {
-	const btnDark = document.getElementById("btn-dark")!;
-	const isDark = localStorage.getItem("dark") === "true";
-	if (isDark) {
-		document.body.classList.add("dark");
-		btnDark.classList.add("play");
-	}
-	btnDark.addEventListener("click", () => {
-		btnDark.classList.add("play");
-		document.body.classList.toggle("dark");
-		localStorage.setItem("dark", document.body.classList.contains("dark").toString());
-	});
-
-	btnDark.addEventListener("animationiteration", () => {
-		btnDark.classList.remove("play");
-	});
-})();
-
-const ws = new Socket("ws://localhost:5663");
+import "./settings.css";
 
 const STATES = ["Éteint", "Allumé"] as const;
 
+/* Elements */
 const state = document.getElementById("state");
-const alert_modal = document.getElementById("alert");
 const add_timing = document.querySelector(".add-timing");
 const timings_wrapper = document.querySelector(".timings");
 const title = document.getElementById("title") as HTMLElement;
 const save_btn = document.querySelector(".save-timing") as HTMLButtonElement;
 const timing_template = document.getElementById("tm-temp") as HTMLTemplateElement;
 
+/* Helpers */
 const pin = parseInt(new URLSearchParams(location.search).get("pin") || "2") - 2;
 const pad = (n: number) => new String(n).padStart(2, "0");
-
-ws.addEventListener("error", () => {
-	alert_modal?.classList.add("show");
-});
-
-ws.addEventListener("close", () => {
-	alert_modal?.classList.add("show");
-});
-
-ws.addEventListener("open", () => {
-	ws.show();
-});
 
 ws.onPinMessage((parallel, error) => {
 	if (error != null) {

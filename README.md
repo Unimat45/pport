@@ -29,8 +29,7 @@ The communication with the server is done through binary array messages, followi
     uint8_t message = { 4, 5, 'H', 'e', 'l', 'l', 'o', 0 };
 
 # Web Interface
-The web interface is written in vanilla html and css, but is using TypeScript for
-the scripts, that need to be compiled to run. See [Installation](#installation) to do so.
+The web interface is written in vanilla html and css, but is using Vite and TypeScript, that need to be compiled to run. See [Installation](#installation) to do so.
 
 There are 2 pages available: index and settings.
 
@@ -48,8 +47,14 @@ Download the source code and build it using CMake. There is a custom flag to cha
     make -j$(nproc) -C build
     sudo make install
 
+To build the web ui, it is as simple as
+
+    npm install
+    npm run build
+
+from the `web-ui/` directory. The bundled site will be available in the `dist/` folder
+
 # TODO
 
 1. Better handling of the label input
-2. Better handling of the timing loop
-3. Add compile flag for WebSocket port
+2. Add compile flag for WebSocket port
