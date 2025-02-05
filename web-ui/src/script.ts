@@ -1,22 +1,9 @@
-import Socket from "./Socket.js";
+import { ws } from "./global";
 
-const btnDark = document.getElementById("btn-dark")!;
-const alert_modal = document.getElementById("alert");
+import "./styles.css";
+
 const switches = document.querySelectorAll(".switch");
 const pins = Array.from(document.querySelectorAll(".pin"));
-const ws = new Socket("ws://localhost:5663");
-
-ws.addEventListener("error", () => {
-	alert_modal?.classList.add("show");
-});
-
-ws.addEventListener("close", () => {
-	alert_modal?.classList.add("show");
-});
-
-ws.addEventListener("open", () => {
-	ws.show();
-});
 
 ws.onPinMessage((parallel, error) => {
 	if (error != null) {
@@ -34,24 +21,6 @@ ws.onPinMessage((parallel, error) => {
 		}
 	}
 });
-
-(() => {
-	const isDark = localStorage.getItem("dark") === "true";
-	if (isDark) {
-		document.body.classList.add("dark");
-		btnDark.classList.add("play");
-	}
-
-	btnDark.addEventListener("click", () => {
-		btnDark.classList.add("play");
-		document.body.classList.toggle("dark");
-		localStorage.setItem("dark", document.body.classList.contains("dark").toString());
-	});
-
-	btnDark.addEventListener("animationiteration", () => {
-		btnDark.classList.remove("play");
-	});
-})();
 
 switches.forEach((s, i) => {
 	s.addEventListener("click", () => {

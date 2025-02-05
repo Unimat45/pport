@@ -1,0 +1,104 @@
+:root {
+	--pad: 1rem;
+
+	--dark: #333333;
+	--light: #dadada;
+	--alt-light: #f2f2f7;
+	--alt-dark: #454545;
+
+	--fg: var(--dark);
+	--bg: var(--light);
+	--alt-bg: var(--alt-light);
+	--on: #95ff80;
+	--off: #ff8080;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+html {
+	font-size: 16px;
+	font-family: Calibri, Arial, Helvetica, sans-serif;
+}
+
+body {
+    overflow-x: hidden;
+	padding: var(--pad);
+
+	color: var(--fg);
+	background: radial-gradient(circle at center, var(--alt-bg), var(--bg)), var(--bg);
+
+	min-height: 100vh;
+	min-height: 100dvh;
+
+	display: grid;
+	grid-template-rows: auto 1fr;
+}
+
+body.dark {
+	--bg: var(--dark);
+	--fg: var(--light);
+	--alt-bg: var(--alt-dark);
+}
+
+#btn-dark {
+	color: var(--fg);
+
+	width: 5rem;
+
+	border: none;
+	background: none;
+
+	cursor: pointer;
+
+	animation: 1s ease-in-out infinite alternate forwards paused rotate;
+}
+
+#btn-dark.play {
+	animation-play-state: running;
+}
+
+#alert {
+    position: absolute;
+    top: -110%;
+    left: 0;
+    right: 0;
+
+    color: #333333;
+    background-color: var(--off);
+    width: 100%;
+    padding: var(--pad);
+
+    text-align: center;
+
+    transition: top 500ms ease-in-out;
+}
+
+#alert.show {
+    top: 0;
+}
+
+.container {
+	display: grid;
+	margin: 0 auto;
+}
+
+
+@media screen and (min-width: 768px) {
+	#btn-dark {
+		position: absolute;
+		top: var(--pad);
+		right: var(--pad);
+	}
+}
+
+@keyframes rotate {
+	to {
+		transform: rotateZ(180deg);
+	}
+}

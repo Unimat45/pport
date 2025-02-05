@@ -2,7 +2,7 @@ export type Timing = { state: boolean; range: number; hour: number; min: number 
 type Pin = { state: boolean; label: string; timings: Timing[] };
 type MessageCallback = (data: Pin[], error: string | null) => void;
 
-enum Action {
+const enum Action {
 	NotSet = 0,
 	Show,
 	Set,

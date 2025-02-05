@@ -1,0 +1,99 @@
+.pin {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	align-items: center;
+	font-size: 1.25rem;
+}
+
+.label {
+	text-align: end;
+}
+
+.switch {
+	--_width: 5em;
+	--_height: 2em;
+
+	--state: var(--off);
+
+	position: relative;
+	margin-left: var(--pad);
+	cursor: pointer;
+
+	justify-self: center;
+
+	height: var(--_height);
+	width: var(--_width);
+
+	border: none;
+	border-radius: var(--pad);
+	background-color: var(--state);
+	box-shadow: inset 0 1px 2px var(--dark);
+
+	transition: background-color 300ms ease-in-out;
+}
+
+.switch[data-on] {
+	--state: var(--on);
+}
+
+.switch[data-on]::after {
+	transform: translateX(calc(var(--_width) - var(--_height)));
+}
+
+.switch::after {
+	content: "";
+
+	position: absolute;
+	top: -5%;
+	left: -5%;
+
+	border-radius: 50%;
+
+	height: 120%;
+	aspect-ratio: 1 / 1;
+
+	background-color: var(--alt-light);
+	box-shadow: inset 0 -1px 2px var(--dark);
+
+	transition: transform 300ms ease-in-out;
+}
+
+.settings {
+	display: block;
+	margin-left: var(--pad);
+	width: 40px;
+	height: 40px;
+}
+
+.settings button {
+	border: none;
+	background: none;
+	color: var(--fg);
+	cursor: pointer;
+
+	width: 100%;
+	height: 100%;
+
+	animation: rotate360 2.5s ease-in-out 0s infinite both paused;
+}
+
+.settings button:hover {
+	animation-play-state: running;
+}
+
+@media screen and (min-width: 768px) {
+	.pin {
+		font-size: 2rem;
+	}
+
+	.switch {
+		--_width: 6em;
+		--_height: 2.5em;
+	}
+}
+
+@keyframes rotate360 {
+	to {
+		transform: rotateZ(360deg);
+	}
+}
