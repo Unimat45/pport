@@ -1,14 +1,14 @@
 :root {
 	--pad: 1rem;
 
-	--dark: #333333;
+	--dark: #333333cf;
 	--light: #dadada;
 	--alt-light: #f2f2f7;
-	--alt-dark: #454545;
+	--alt-dark: #454545cf;
 
-	--fg: var(--dark);
-	--bg: var(--light);
-	--alt-bg: var(--alt-light);
+	--fg: var(--light);
+	--alt-bg: #a87a42c0;
+	--bg: #844620c2;
 	--on: #95ff80;
 	--off: #ff8080;
 }
@@ -31,7 +31,7 @@ body {
 	padding: var(--pad);
 
 	color: var(--fg);
-	background: radial-gradient(circle at center, var(--alt-bg), var(--bg)), var(--bg);
+	background: radial-gradient(circle at center, var(--alt-bg), var(--bg)), url("/leather.png"), var(--bg);
 
 	min-height: 100vh;
 	min-height: 100dvh;

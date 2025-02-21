@@ -7,7 +7,7 @@ const alert_modal = document.getElementById("alert");
 const btnDark = document.getElementById("btn-dark");
 
 /* WebSocket */
-export const ws = new Socket("ws://localhost:5663");
+export const ws = new Socket(`ws://${location.host}:5663`);
 
 ws.addEventListener("error", () => {
 	alert_modal?.classList.add("show");
