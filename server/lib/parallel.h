@@ -30,7 +30,12 @@ typedef struct Pin {
     uint8_t state;
     const char *label;
     Timing *timings;
-} Pin, *Parallel;
+} Pin;
+
+typedef struct Parallel {
+    uint8_t active;
+    Pin **pins;
+} Parallel;
 
 Parallel *init_port(void);
 void free_parallel(Parallel *port);

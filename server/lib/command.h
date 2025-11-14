@@ -6,7 +6,7 @@
 
 #define MAX_ERR_LEN 39
 
-typedef struct Pin *Parallel;
+typedef struct Parallel *lpParallel;
 
 typedef enum {
     NotSet = 0,
@@ -28,6 +28,6 @@ typedef struct {
 } AST;
 
 int command_parse(void *cmd, size_t cmd_size, AST *restrict ast, char **errMsg);
-size_t command_exec(AST *ast, Parallel *port, void *restrict data, char **errMsg);
+size_t command_exec(AST *ast, lpParallel port, void *restrict data, char **errMsg);
 
 #endif // !COMMAND_H

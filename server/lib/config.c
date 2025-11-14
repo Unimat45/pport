@@ -2,7 +2,6 @@
 #include "globals.h"
 #include "parallel.h"
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,9 +38,16 @@ int config_load(Parallel *port)
     size = fread(buf, 1, size, fd);
     fclose(fd);
 
+    if (size == 0) {
+        fclose(fd);
+        return 0;
+    }
+
+    port->active = *buf++;
+
     PARA_LOOP(i)
     {
-        Pin *p = port[i];
+        Pin *p = port->pins[i];
 
         p->state = *buf++;
 
@@ -75,7 +81,7 @@ int config_load(Parallel *port)
 uint8_t calculate_value(Parallel *port)
 {
     uint8_t value = 0;
-    PARA_LOOP(i) { value |= (1 << i) * port[i]->state; }
+    PARA_LOOP(i) { value |= (1 << i) * port->pins[i]->state; }
 
     return value;
 }

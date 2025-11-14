@@ -25,10 +25,18 @@ Parallel *init_port(void)
     int free_i;
     Parallel *port = NULL;
 
-    port = malloc(sizeof(Parallel) * 8);
+    port = malloc(sizeof(Parallel));
 
     if (port == NULL)
     {
+        return NULL;
+    }
+
+    port->active = 0b11;
+    port->pins = calloc(8, sizeof(Pin*));
+
+    if (port->pins == NULL) {
+        free(port);
         return NULL;
     }
 
@@ -57,13 +65,13 @@ Parallel *init_port(void)
         memset((void *)p->label, 0, 6);
         snprintf((char *)p->label, 6, "Pin %d", i + 2);
 
-        port[i] = p;
+        port->pins[i] = p;
     }
 
     config_load(port);
 
     uint8_t value = 0;
-    PARA_LOOP(i) { value |= (1 << i) * port[i]->state; }
+    PARA_LOOP(i) { value |= (1 << i) * port->pins[i]->state; }
 
 #ifdef NDEBUG
     outb(value, PPORT);
@@ -74,7 +82,7 @@ Parallel *init_port(void)
 err_free_para:
     for (int i = free_i; i >= 0; i--)
     {
-        Pin *p = port[i];
+        Pin *p = port->pins[i];
 
         if (p)
         {
@@ -94,7 +102,7 @@ void free_parallel(Parallel *port)
 {
     PARA_LOOP(i)
     {
-        Pin *p = port[i];
+        Pin *p = port->pins[i];
 
         if (p->label)
         {
@@ -196,7 +204,7 @@ void remove_timings(Pin *pin)
 
 void set_all_state(Parallel *port, uint8_t state)
 {
-    PARA_LOOP(i) { port[i]->state = state; }
+    PARA_LOOP(i) { port->pins[i]->state = state; }
 }
 
 size_t serialize_pin(Pin *p, void *restrict data)
@@ -237,12 +245,13 @@ size_t serialize_pin(Pin *p, void *restrict data)
 
 size_t parallel_as_mem(Parallel *port, void *restrict data)
 {
-    uint8_t *base = data;
     size_t len;
+    uint8_t *base = data;
+    *base++ = port->active;
 
     PARA_LOOP(i)
     {
-        Pin *p = port[i];
+        Pin *p = port->pins[i];
 
         len = serialize_pin(p, base);
         base += len;

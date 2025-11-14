@@ -1,6 +1,7 @@
 export type Timing = { state: boolean; range: number; hour: number; min: number };
 type Pin = { state: boolean; label: string; timings: Timing[] };
-type MessageCallback = (data: Pin[], error: string | null) => void;
+type Parallel = { active: number; pins: Pin[] };
+type MessageCallback = (data: Parallel, error: string | null) => void;
 
 const enum Action {
 	NotSet = 0,
@@ -26,7 +27,7 @@ class Socket extends WebSocket {
 		this.addEventListener("message", async ({ data }) => {
 			if (typeof data === "string") {
 				this.cbs.forEach((cb) => {
-					cb.call(undefined, [], data);
+					cb.call(undefined, {} as Parallel, data);
 				});
 
 				return;
@@ -34,8 +35,8 @@ class Socket extends WebSocket {
 
 			const buf = new Uint8Array(await (data as Blob).arrayBuffer());
 
-			const parallel: Pin[] = [];
-			let buf_i = 0;
+			const parallel: Parallel = { active: buf[0], pins: [] };
+			let buf_i = 1;
 
 			for (let i = 0; i < 8; i++) {
 				const lbl_len = strlen(buf.slice(buf_i + 1));
@@ -58,7 +59,7 @@ class Socket extends WebSocket {
 					base += 7;
 				}
 
-				parallel.push(p);
+				parallel.pins.push(p);
 
 				buf_i = 2 + base;
 			}

@@ -5,7 +5,7 @@
 #include <pthread.h>
 
 #define BroadcastCb(b) void (*b)(char *msg, size_t size)
-typedef struct Pin *Parallel;
+typedef struct Parallel Parallel;
 
 typedef struct
 {

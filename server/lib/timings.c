@@ -9,7 +9,6 @@
 
 #include <errno.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -68,7 +67,7 @@ void *timings_loop(void *ptr)
             // Change months range to 1-12
             dt->tm_mon++;
 
-            Pin *p = port[i];
+            Pin *p = port->pins[i];
             Timing *head = p->timings;
 
             while (head != NULL)
