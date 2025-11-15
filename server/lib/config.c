@@ -38,12 +38,22 @@ int config_load(Parallel *port)
     size = fread(buf, 1, size, fd);
     fclose(fd);
 
-    if (size == 0) {
+    if (size == 0)
+    {
         fclose(fd);
         return 0;
     }
 
-    port->active = *buf++;
+    uint8_t cfg_version = *buf++;
+    if (cfg_version < 2)
+    {
+        port->active = 0b11;
+        buf--;
+    }
+    else
+    {
+        port->active = *buf++;
+    }
 
     PARA_LOOP(i)
     {

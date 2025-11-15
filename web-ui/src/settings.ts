@@ -20,7 +20,7 @@ ws.onPinMessage((parallel, error) => {
 	if (error != null) {
 		alert(error);
 	} else if (state != null) {
-		const p = parallel[pin];
+		const p = parallel.pins[pin];
 
 		title.querySelector("span")!.textContent = p.label;
 		state.classList.toggle("click", p.state);

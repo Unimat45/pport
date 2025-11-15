@@ -1,3 +1,8 @@
+.container {
+    height: fit-content;
+    gap: 2rem;
+}
+
 .pin {
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);
