@@ -1,13 +1,24 @@
 #include "command.h"
+#include "config.h"
 #include "log.h"
 #include "parallel.h"
 #include "timings.h"
 
 #include <pthread.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <ws.h>
+
+static volatile sig_atomic_t running = 1;
+
+static void handle_signal(int sig)
+{
+    (void)sig;
+    running = 0;
+}
 
 Parallel *port = NULL;
 
@@ -15,6 +26,7 @@ static void onOpenClose(ws_cli_conn_t client) { (void)client; }
 
 static void broadcastCb(char *data, size_t size)
 {
+    config_dump(port);
     ws_sendframe_bin_bcast(5663, (const char *)data, size);
 }
 
@@ -33,17 +45,19 @@ void onMessage(ws_cli_conn_t client, const uint8_t *cmd, uint64_t size,
         return;
     }
 
-    uint8_t data[5120];
+    uint8_t data[MAX_PORT_SIZE];
     size_t len = command_exec(&ast, port, data, &errMsg);
 
     if (len < 1)
     {
         ws_sendframe_txt(client, errMsg);
         log_error("%s: %d", errMsg, *cmd);
-        return;
     }
-
-    ws_sendframe_bin_bcast(5663, (const char *)data, len);
+    else
+    {
+        config_dump(port);
+        ws_sendframe_bin_bcast(5663, (const char *)data, len);
+    }
 }
 
 size_t onBaseRequest(const char *req, size_t req_len, char **res)
@@ -74,7 +88,7 @@ size_t onBaseRequest(const char *req, size_t req_len, char **res)
     AST ast;
     char *errMsg;
 
-    uint8_t cmd[] = { Toggle, pin };
+    uint8_t cmd[] = {Toggle, pin};
     int ret = command_parse((void *)cmd, 2, &ast, &errMsg);
 
     if (!ret)
@@ -85,7 +99,7 @@ size_t onBaseRequest(const char *req, size_t req_len, char **res)
         return sizeof(notFound) - 1;
     }
 
-    uint8_t data[5120];
+    uint8_t data[MAX_PORT_SIZE];
     size_t resLen = command_exec(&ast, port, data, &errMsg);
 
     if (resLen < 1)
@@ -112,20 +126,19 @@ int main(void)
         return 1;
     }
 
-    pthread_t th1;
-    pthread_mutex_t mtx;
+    config_load(port);
 
-    pthread_mutex_init(&mtx, NULL);
-    pthread_mutex_lock(&mtx);
+    TimingArgs args = {port, &broadcastCb};
+    start_timings_loop(&args);
 
-    TimingArgs args = {&mtx, port, &broadcastCb};
-    (void)pthread_create(&th1, NULL, &timings_loop, &args);
+    signal(SIGINT, handle_signal);
+    signal(SIGTERM, handle_signal);
 
     ws_socket(&(struct ws_server){
         .path = "/",
         .host = "0.0.0.0",
         .port = 5663,
-        .thread_loop = 0,
+        .thread_loop = 1,
         .timeout_ms = 1000,
         .evs.onmessage = &onMessage,
         .evs.onopen = &onOpenClose,
@@ -133,8 +146,13 @@ int main(void)
         .evs.onbaserequest = &onBaseRequest,
     });
 
-    pthread_mutex_unlock(&mtx);
-    pthread_join(th1, NULL);
+    while (running)
+    {
+        sleep(1);
+    }
+
+    ws_shutdown();
+    stop_timings_loop();
 
     free_parallel(port);
 

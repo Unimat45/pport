@@ -1,0 +1,76 @@
+#
+# Copyright (C) 2024 Davidson Francis <davidsondfgl@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>
+#
+
+name: CI
+
+env:
+  CTEST_OUTPUT_ON_FAILURE: 1
+  TRAVIS: 1
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  linux:
+    name: Linux (AMD64) Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Build & Tests
+      run: >
+        mkdir build &&
+        cd build &&
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DENABLE_WSSERVER_TEST=On &&
+        make -j$(nproc) &&
+        CTEST_OUTPUT_ON_FAILURE=1 ctest --verbose
+
+  windows:
+    name: Windows (via Wine) (AMD64) Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Install toolchain
+      run: sudo apt-get install mingw-w64 wine64 -y
+    - name: Build & Tests
+      run: >
+        wget https://raw.githubusercontent.com/Theldus/wsServer/master/.github/workflows/mingw-w64-x86_64.cmake &&
+        mkdir build &&
+        cd build &&
+        cmake .. -DCMAKE_TOOLCHAIN_FILE=../mingw-w64-x86_64.cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_WSSERVER_TEST=On &&
+        make -j$(nproc) &&
+        CTEST_OUTPUT_ON_FAILURE=1 ctest --verbose
+
+  macOS:
+    name: macOS (AMD64) Build
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Build
+      run: >
+        mkdir build &&
+        cd build &&
+        cmake .. -DCMAKE_BUILD_TYPE=Release &&
+        cmake --build .

@@ -82,7 +82,7 @@ uint8_t calculate_value(Parallel *port)
 
 void config_dump(Parallel *port)
 {
-    uint8_t data[5120];
+    uint8_t data[MAX_PORT_SIZE];
     size_t size = parallel_as_mem(port, data);
 
     FILE *fd = NULL;

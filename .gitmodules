@@ -1,3 +1,3 @@
-[submodule "server/lib/wsServer"]
-	path = server/lib/wsServer
+[submodule "server/external/wsServer"]
+	path = server/external/wsServer
 	url = https://github.com/unimat45/wsServer.git
