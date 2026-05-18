@@ -55,8 +55,23 @@ void onMessage(ws_cli_conn_t client, const uint8_t *cmd, uint64_t size,
     }
     else
     {
-        config_dump(port);
         ws_sendframe_bin_bcast(5663, (const char *)data, len);
+    }
+
+    switch (ast.action)
+    {
+    case Set:
+    case Label:
+    case Toggle:
+    case Timings:
+    case DeleteTiming:
+    case DeleteTimings:
+        config_dump(port);
+        break;
+    case Show:
+    case NotSet:
+    default:
+        break;
     }
 }
 

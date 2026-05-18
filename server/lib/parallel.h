@@ -12,8 +12,8 @@
 #define MAX_LABEL 64
 #define TIMING_LEN sizeof(Timing)
 
-// 8 pins with label and state + 50 timings allocated each
-#define MAX_PORT_SIZE (8 * (MAX_LABEL + 1 + TIMING_LEN * 50))
+// 8 pins with label and state + 50 timings allocated each + version + enabled_pins
+#define MAX_PORT_SIZE (8 * (MAX_LABEL + 1 + TIMING_LEN * 50) + 2)
 
 typedef struct Timing {
     union {
@@ -33,9 +33,14 @@ typedef struct Timing {
 
 typedef struct Pin {
     uint8_t state;
-    const char *label;
+    char *label;
     Timing *timings;
-} Pin, *Parallel;
+} Pin;
+
+typedef struct Parallel {
+    Pin *pins[8];
+    uint8_t enabled_pins;
+} Parallel;
 
 PPORT_EXPORT Parallel *init_port(void);
 PPORT_EXPORT void free_parallel(Parallel *port);

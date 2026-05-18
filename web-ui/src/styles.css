@@ -1,3 +1,7 @@
+.container {
+    grid-template-rows: repeat(8, 1fr);
+}
+
 .pin {
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);
@@ -82,8 +86,14 @@
 }
 
 @media screen and (min-width: 768px) {
+    .container {
+        margin: auto;
+        grid-template-rows: unset;
+    }
+
 	.pin {
 		font-size: 2rem;
+        min-height: 77px;
 	}
 
 	.switch {
