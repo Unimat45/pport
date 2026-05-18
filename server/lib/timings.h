@@ -4,10 +4,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "parallel.h"
 #include "pport_export.h"
 
 #define BroadcastCb(b) void (*b)(char *msg, size_t size)
-typedef struct Pin *Parallel;
 
 typedef struct
 {

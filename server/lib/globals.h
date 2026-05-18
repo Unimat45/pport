@@ -5,6 +5,8 @@
 #define PPORT 0x378
 #endif
 
+#define CFG_VERSION 2
+
 #define PARA_LOOP(i) for (int i = 0; i < 8; i++)
 
 #define FIRST_DAY(range) ((range >> 24) & 0xFF)

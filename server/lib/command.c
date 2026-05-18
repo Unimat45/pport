@@ -1,6 +1,5 @@
 #include "command.h"
 #include "globals.h"
-#include "parallel.h"
 
 #ifdef LOG
 #include "log.h"
@@ -136,7 +135,7 @@ size_t command_exec(AST *ast, Parallel *port, void *restrict data,
     {
         uint8_t pin = ast->pin - 2;
         uint8_t state = *(uint8_t *)ast->payload;
-        set_state(port[pin], state);
+        set_state(port->pins[pin], state);
         ret = parallel_as_mem(port, data);
     }
     break;
@@ -144,14 +143,14 @@ size_t command_exec(AST *ast, Parallel *port, void *restrict data,
     {
         uint8_t pin = ast->pin - 2;
         char *label = (char *)ast->payload;
-        set_label(port[pin], label);
+        set_label(port->pins[pin], label);
         ret = parallel_as_mem(port, data);
     }
     break;
     case Toggle:
     {
         uint8_t pin = ast->pin - 2;
-        set_state(port[pin], !port[pin]->state);
+        set_state(port->pins[pin], !port->pins[pin]->state);
         ret = parallel_as_mem(port, data);
     }
     break;
@@ -169,7 +168,7 @@ size_t command_exec(AST *ast, Parallel *port, void *restrict data,
             t.state = (payload[i + 6]);
             t.next = NULL;
 
-            add_timing(port[pin], &t);
+            add_timing(port->pins[pin], &t);
         }
 
         ret = parallel_as_mem(port, data);
@@ -179,7 +178,7 @@ size_t command_exec(AST *ast, Parallel *port, void *restrict data,
     {
         uint8_t pin = ast->pin - 2;
 
-        remove_timings(port[pin]);
+        remove_timings(port->pins[pin]);
 
         ret = parallel_as_mem(port, data);
     }
@@ -192,7 +191,7 @@ size_t command_exec(AST *ast, Parallel *port, void *restrict data,
         memcpy(&t, (char *)ast->payload, TIMING_LEN);
         t.next = NULL;
 
-        remove_timing(port[pin], &t);
+        remove_timing(port->pins[pin], &t);
 
         ret = parallel_as_mem(port, data);
     }

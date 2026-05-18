@@ -3,7 +3,6 @@
 #endif
 
 #include "globals.h"
-#include "parallel.h"
 #include "timings.h"
 
 #include <asm-generic/errno-base.h>
@@ -69,7 +68,7 @@ void *timings_loop(void *ptr)
             // Change months range to 1-12
             dt->tm_mon++;
 
-            Pin *p = port[i];
+            Pin *p = port->pins[i];
             Timing *head = p->timings;
 
             while (head != NULL)

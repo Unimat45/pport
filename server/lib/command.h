@@ -4,11 +4,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "parallel.h"
 #include "pport_export.h"
 
 #define MAX_ERR_LEN 39
-
-typedef struct Pin *Parallel;
 
 typedef enum {
     NotSet = 0,
