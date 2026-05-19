@@ -166,6 +166,7 @@ int main(void)
         sleep(1);
     }
 
+    log_info("Cleaning up...");
     ws_shutdown();
     stop_timings_loop();
 

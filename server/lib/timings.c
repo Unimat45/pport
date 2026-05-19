@@ -58,59 +58,84 @@ void *timings_loop(void *ptr)
     port = args->port;
     broadcast = args->broadcast;
 
+    int last_yday = -1;
+
     while (!needQuit())
     {
+        time_t now_epoch = time(NULL);
+        struct tm *dt = localtime(&now_epoch);
+
+        if (dt->tm_yday != last_yday)
+        {
+            PARA_LOOP(i) { port->pins[i]->today_dirty = true; }
+            last_yday = dt->tm_yday;
+        }
+
+        if (dt->tm_sec != 0)
+        {
+            sleep(1);
+            continue;
+        }
+
+        int key = dt->tm_hour * 60 + dt->tm_min;
+
         PARA_LOOP(i)
         {
-            time_t now_epoch = time(NULL);
-            struct tm *dt = localtime(&now_epoch);
-
-            // Change months range to 1-12
-            dt->tm_mon++;
-
             Pin *p = port->pins[i];
-            Timing *head = p->timings;
 
-            while (head != NULL)
+            if (p->today_dirty)
+                build_index(p, dt);
+
+            int lo = 0, hi = (int)p->today_count - 1;
+            int found = -1;
+            while (lo <= hi)
             {
-                struct tm first, last;
-                memset(&first, 0, sizeof(first));
-                memset(&last, 0, sizeof(last));
-
-                first.tm_mday = head->range.first_day;
-                first.tm_mon = head->range.first_month;
-                first.tm_year = dt->tm_year;
-
-                last.tm_mday = head->range.last_day;
-                last.tm_mon = head->range.last_month;
-                last.tm_year = dt->tm_year;
-
-                bool isDay = compareDates(dt, &first) <= 0 &&
-                             compareDates(dt, &last) >= 0;
-
-                bool isHour = dt->tm_hour == head->hour;
-                bool isMinute = dt->tm_min == head->minute;
-
-                if (isDay && isHour && isMinute && dt->tm_sec == 0)
+                int mid = lo + (hi - lo) / 2;
+                int mk = p->today[mid]->hour * 60 + p->today[mid]->minute;
+                if (mk < key)
+                    lo = mid + 1;
+                else if (mk > key)
+                    hi = mid - 1;
+                else
                 {
-                    set_state(p, head->state);
+                    found = mid;
+                    break;
+                }
+            }
 
-                    char data[MAX_PORT_SIZE];
-                    int ret = parallel_as_mem(port, data);
-                    broadcast(data, ret);
+            if (found < 0)
+                continue;
+
+            int start = found;
+            while (start > 0 &&
+                   p->today[start - 1]->hour * 60 +
+                           p->today[start - 1]->minute ==
+                       key)
+                start--;
+
+            int end = found;
+            while (end < (int)p->today_count - 1 &&
+                   p->today[end + 1]->hour * 60 +
+                           p->today[end + 1]->minute ==
+                       key)
+                end++;
+
+            for (int j = start; j <= end; j++)
+            {
+                Timing *t = p->today[j];
+                set_state(p, t->state);
+
+                char data[MAX_PORT_SIZE];
+                int ret = parallel_as_mem(port, data);
+                broadcast(data, ret);
 
 #ifdef LOG
-                    log_info("TIMER HIT FOR PIN %d %d %s - %d %s %02d:%02d %s",
-                             i + 2, head->range.first_day,
-                             months[head->range.first_month - 1],
-                             head->range.last_day,
-                             months[head->range.last_month - 1], head->hour,
-                             head->minute, head->state ? "ON" : "OFF");
-
+                log_info("TIMER HIT FOR PIN %d %d %s - %d %s %02d:%02d %s",
+                         i + 2, t->range.first_day,
+                         months[t->range.first_month - 1], t->range.last_day,
+                         months[t->range.last_month - 1], t->hour, t->minute,
+                         t->state ? "ON" : "OFF");
 #endif
-                }
-
-                head = head->next;
             }
         }
 

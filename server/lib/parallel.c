@@ -36,7 +36,7 @@ Parallel *init_port(void)
     PARA_LOOP(i)
     {
         Pin *p = NULL;
-        p = malloc(sizeof(Pin));
+        p = calloc(1, sizeof(Pin));
 
         if (p == NULL)
         {
@@ -47,6 +47,7 @@ Parallel *init_port(void)
         p->state = 0;
         p->timings = NULL;
         p->label = NULL;
+        p->today_dirty = true;
         p->label = calloc(1, 6);
 
         if (p->label == NULL)
@@ -108,6 +109,10 @@ void free_parallel(Parallel *port)
             node = tmp;
         }
 
+        if (p->today != NULL)
+        {
+            free(p->today);
+        }
         free(p);
     }
 
@@ -158,44 +163,110 @@ void add_timing(Pin *pin, Timing *timing)
     memcpy(clone, timing, sizeof(Timing));
 
     clone->next = pin->timings;
-
     pin->timings = clone;
+
+    pin->today_dirty = true;
 }
 
 void remove_timing(Pin *pin, Timing *timing)
 {
+    Timing *prev = NULL;
     Timing *head = pin->timings;
 
-    while (head != NULL && !compareTiming(head->next, timing))
+    while (head != NULL && !compareTiming(head, timing))
     {
+        prev = head;
         head = head->next;
     }
 
-    Timing *to_free = head->next;
-    head->next = to_free->next;
+    if (head == NULL)
+        return;
 
-    free(to_free);
+    if (prev == NULL)
+        pin->timings = head->next;
+    else
+        prev->next = head->next;
+
+    pin->today_count = 0;
+    pin->today_dirty = true;
+
+    free(head);
 }
 
 void remove_timings(Pin *pin)
 {
+    pin->today_count = 0;
+    pin->today_dirty = true;
+
     Timing *head = pin->timings;
 
     while (head != NULL)
     {
         Timing *to_free = head;
-
         head = to_free->next;
-
         free(to_free);
     }
 
     pin->timings = NULL;
 }
 
-void set_all_state(Parallel *port, uint8_t state)
+static bool date_in_range(uint8_t mon, uint8_t day,
+                          uint8_t f_mon, uint8_t f_day,
+                          uint8_t l_mon, uint8_t l_day)
 {
-    PARA_LOOP(i) { port->pins[i]->state = state; }
+    int t = mon * 32 + day;
+    int f = f_mon * 32 + f_day;
+    int l = l_mon * 32 + l_day;
+    return t >= f && t <= l;
+}
+
+static int cmp_timing_key(const void *a, const void *b)
+{
+    const Timing *ta = *(const Timing *const *)a;
+    const Timing *tb = *(const Timing *const *)b;
+    return (ta->hour * 60 + ta->minute) - (tb->hour * 60 + tb->minute);
+}
+
+void build_index(Pin *pin, const struct tm *dt)
+{
+    uint8_t mon = dt->tm_mon + 1;
+    uint8_t day = dt->tm_mday;
+
+    uint16_t count = 0;
+    for (Timing *t = pin->timings; t != NULL; t = t->next)
+    {
+        if (date_in_range(mon, day, t->range.first_month, t->range.first_day,
+                          t->range.last_month, t->range.last_day))
+            count++;
+    }
+
+    if (count > pin->today_cap)
+    {
+        Timing **buf = realloc(pin->today, count * sizeof(Timing *));
+        if (buf == NULL)
+        {
+            pin->today_count = 0;
+            pin->today_dirty = false;
+            return;
+        }
+        pin->today = buf;
+        pin->today_cap = count;
+    }
+
+    uint16_t idx = 0;
+    for (Timing *t = pin->timings; t != NULL; t = t->next)
+    {
+        if (date_in_range(mon, day, t->range.first_month, t->range.first_day,
+                          t->range.last_month, t->range.last_day))
+            pin->today[idx++] = t;
+    }
+
+    pin->today_count = count;
+
+    if (count > 1)
+        qsort(pin->today, count, sizeof(Timing *), cmp_timing_key);
+
+    pin->today_dirty = false;
 }
 
 size_t serialize_pin(Pin *p, void *restrict data)
