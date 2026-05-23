@@ -18,11 +18,10 @@ option(PORT_ENABLE_LOGGING "Should log queries" ON)
 
 # 4. Target Definition
 # Explicitly listing files is safer than GLOB
-add_library(${PROJECT_NAME} 
+add_library(${PROJECT_NAME}
     "command.c"
     "log.c"
     "parallel.c"
-    "timings.c"
 )
 
 # 5. Compiler Features and Warnings

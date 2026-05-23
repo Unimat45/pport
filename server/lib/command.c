@@ -45,29 +45,30 @@ void command_tostring(AST *ast, char *cmd)
             t.hour = (payload[i + 4]);
             t.minute = (payload[i + 5]);
             t.state = (payload[i + 6]);
-            t.next = NULL;
-            written += sprintf(cmd, "TIMINGS PIN %d %d %s - %d %s %02d:%02d %s\n",
-                               ast->pin, t.range.first_day,
-                               months[t.range.first_month - 1],
-                               t.range.last_day, months[t.range.last_month - 1],
-                               t.hour, t.minute, t.state ? "ON" : "OFF");
+
+            written += sprintf(
+                cmd, "TIMINGS PIN %d %d %s - %d %s %02d:%02d %s\n", ast->pin,
+                t.range.first_day, months[t.range.first_month - 1],
+                t.range.last_day, months[t.range.last_month - 1], t.hour,
+                t.minute, t.state ? "ON" : "OFF");
         }
 
         memset(cmd + written - 1, 0, 1);
     }
     break;
-    case DeleteTimings:
-        sprintf(cmd, "DELETE ALL TIMINGS FOR PIN %d", ast->pin);
-        break;
     case DeleteTiming:
     {
         Timing t;
         memcpy(&t, (char *)ast->payload, TIMING_LEN);
-        t.next = NULL;
         sprintf(cmd, "DELETE TIMING FOR PIN %d %d %s - %d %s %02d:%02d %s",
                 ast->pin, t.range.first_day, months[t.range.first_month - 1],
                 t.range.last_day, months[t.range.last_month - 1], t.hour,
                 t.minute, t.state ? "ON" : "OFF");
+    }
+    break;
+    case DeleteAllTimings:
+    {
+        sprintf(cmd, "DELETE ALL TIMINGS FOR PIN %d", ast->pin);
     }
     break;
     default:
@@ -105,6 +106,11 @@ int command_parse(void *cmd, size_t cmd_size, AST *restrict ast, char **errMsg)
         return 0;
     }
 
+    if (ast->action == NextTrigger)
+    {
+        return 1;
+    }
+
     size_t capped_size = min(cmd_size - 2, MAX_LABEL);
     ast->payload = malloc(capped_size + 1);
 
@@ -116,7 +122,7 @@ int command_parse(void *cmd, size_t cmd_size, AST *restrict ast, char **errMsg)
 
     memcpy(ast->payload, buf, capped_size);
     ast->payload_size = capped_size;
-    memset((uint8_t*)ast->payload + capped_size, 0, 1);
+    memset((uint8_t *)ast->payload + capped_size, 0, 1);
 
     return 1;
 }
@@ -166,7 +172,6 @@ size_t command_exec(AST *ast, Parallel *port, void *restrict data,
             t.hour = (payload[i + 4]);
             t.minute = (payload[i + 5]);
             t.state = (payload[i + 6]);
-            t.next = NULL;
 
             add_timing(port->pins[pin], &t);
         }
@@ -174,11 +179,26 @@ size_t command_exec(AST *ast, Parallel *port, void *restrict data,
         ret = parallel_as_mem(port, data);
     }
     break;
-    case DeleteTimings:
+    case NextTrigger:
     {
         uint8_t pin = ast->pin - 2;
+        Pin *p = port->pins[pin];
+        size_t idx = next_timing(p);
 
-        remove_timings(port->pins[pin]);
+        Timing t = {0};
+        if (idx < p->timings_count)
+            memcpy(&t, p->timings[idx], sizeof(Timing));
+        else
+            t.hour = 0xFF;
+
+        memcpy(data, &t, sizeof(Timing));
+        ret = sizeof(Timing);
+    }
+    break;
+    case DeleteAllTimings:
+    {
+        Pin *pin = port->pins[ast->pin - 2];
+        remove_all_timings(pin);
 
         ret = parallel_as_mem(port, data);
     }
@@ -189,8 +209,6 @@ size_t command_exec(AST *ast, Parallel *port, void *restrict data,
 
         Timing t;
         memcpy(&t, (char *)ast->payload, TIMING_LEN);
-        t.next = NULL;
-
         remove_timing(port->pins[pin], &t);
 
         ret = parallel_as_mem(port, data);

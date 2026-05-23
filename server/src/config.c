@@ -66,7 +66,7 @@ int config_load(Parallel *port)
             t.hour = *buf++;
             t.minute = *buf++;
             t.state = *buf++;
-            t.next = NULL;
+
 
             add_timing(p, &t);
         }

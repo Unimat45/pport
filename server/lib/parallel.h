@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <time.h>
 
 #include "pport_export.h"
 
@@ -34,19 +33,16 @@ typedef struct Timing
     uint8_t hour;
     uint8_t minute;
     uint8_t state;
-    struct Timing *next;
 } Timing;
 
 typedef struct Pin
 {
     uint8_t state;
     char *label;
-    Timing *timings;
+    Timing **timings;
+    size_t timings_count;
+    size_t timings_cap;
 
-    Timing **today;
-    uint16_t today_count;
-    uint16_t today_cap;
-    bool today_dirty;
 } Pin;
 
 typedef struct Parallel
@@ -62,8 +58,11 @@ PPORT_EXPORT void set_state(Pin *pin, uint8_t state);
 PPORT_EXPORT size_t set_label(Pin *pin, const char *label);
 PPORT_EXPORT void add_timing(Pin *pin, Timing *timing);
 PPORT_EXPORT void remove_timing(Pin *pin, Timing *timing);
-PPORT_EXPORT void remove_timings(Pin *pin);
-PPORT_EXPORT void build_index(Pin *pin, const struct tm *dt);
+PPORT_EXPORT void remove_all_timings(Pin *pin);
+PPORT_EXPORT size_t next_timing(Pin *pin);
+
+PPORT_EXPORT bool date_in_range(uint8_t mon, uint8_t day, uint8_t f_mon,
+                                uint8_t f_day, uint8_t l_mon, uint8_t l_day);
 
 PPORT_EXPORT size_t parallel_as_mem(Parallel *port, void *restrict data);
 

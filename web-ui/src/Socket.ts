@@ -2,9 +2,12 @@ export type Timing = { state: boolean; range: number; hour: number; min: number 
 type Pin = { state: boolean; label: string; timings: Timing[] };
 type Parallel = { pins: Pin[]; enabled_pins: number; isPinEnabled: (pin: number) => boolean };
 
+type NextTriggerDetail = { hour: number; min: number; state: boolean } | null;
+
 interface ParallelEventMap extends WebSocketEventMap {
     "parallel": CustomEvent<{ parallel: Parallel }>;
-    "parallelError": CustomEvent<string>
+    "parallelError": CustomEvent<string>;
+    "nextTrigger": CustomEvent<NextTriggerDetail>;
 }
 
 const enum Action {
@@ -14,6 +17,8 @@ const enum Action {
     Toggle,
     Label,
     Timings,
+    NextTrigger,
+    DeleteAllTimings,
     DeleteTiming,
 }
 
@@ -41,12 +46,21 @@ class Socket extends WebSocket {
             };
 
             if (typeof data === "string") {
-                const errorEvent = new CustomEvent("parallelError", {
+                try {
+                    const json = JSON.parse(data);
+                    if ("nextTrigger" in json) {
+                        this.dispatchEvent(new CustomEvent("nextTrigger", {
+                            cancelable: true,
+                            detail: json.nextTrigger as NextTriggerDetail,
+                        }));
+                        return;
+                    }
+                } catch { /* not JSON, treat as error */ }
+
+                this.dispatchEvent(new CustomEvent("parallelError", {
                     cancelable: true,
                     detail: data,
-                });
-
-                this.dispatchEvent(errorEvent);
+                }));
 
                 return;
             }
@@ -136,8 +150,12 @@ class Socket extends WebSocket {
         );
     }
 
+    public nextTrigger(pin: number) {
+        this.send(new Uint8Array([Action.NextTrigger, pin + 2]));
+    }
+
     public removeTimings(pin: number) {
-        this.send(new Uint8Array([Action.DeleteTiming, pin + 2]));
+        this.send(new Uint8Array([Action.DeleteAllTimings, pin + 2]));
     }
 }
 

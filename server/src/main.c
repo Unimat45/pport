@@ -53,6 +53,19 @@ void onMessage(ws_cli_conn_t client, const uint8_t *cmd, uint64_t size,
         ws_sendframe_txt(client, errMsg);
         log_error("%s: %d", errMsg, *cmd);
     }
+    else if (ast.action == NextTrigger)
+    {
+        Timing t;
+        memcpy(&t, data, sizeof(Timing));
+        char buf[128];
+        if (t.hour == 0xFF)
+            snprintf(buf, sizeof(buf), "{\"nextTrigger\":null}");
+        else
+            snprintf(buf, sizeof(buf),
+                     "{\"nextTrigger\":{\"hour\":%d,\"min\":%d,\"state\":%s}}",
+                     t.hour, t.minute, t.state ? "true" : "false");
+        ws_sendframe_txt(client, buf);
+    }
     else
     {
         ws_sendframe_bin_bcast(5663, (const char *)data, len);
@@ -65,7 +78,7 @@ void onMessage(ws_cli_conn_t client, const uint8_t *cmd, uint64_t size,
     case Toggle:
     case Timings:
     case DeleteTiming:
-    case DeleteTimings:
+    case DeleteAllTimings:
         config_dump(port);
         break;
     case Show:

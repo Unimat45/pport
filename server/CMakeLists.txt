@@ -16,6 +16,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib)
 add_executable(${PROJECT_NAME}
     src/main.c
     src/config.c
+    src/timings.c
 )
 
 if(PORT_ENABLE_LOGGING)

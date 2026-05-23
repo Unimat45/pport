@@ -16,7 +16,8 @@ typedef enum {
     Toggle,
     Label,
     Timings,
-    DeleteTimings,
+    NextTrigger,
+    DeleteAllTimings,
     DeleteTiming,
     Last = DeleteTiming
 } Action;

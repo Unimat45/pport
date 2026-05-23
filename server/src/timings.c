@@ -10,42 +10,21 @@
 #include <stdbool.h>
 #include <time.h>
 #include <unistd.h>
-#include <string.h>
 
 pthread_t th;
-pthread_mutex_t mtx;
+pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 
 int needQuit(void)
 {
     switch (pthread_mutex_trylock(&mtx))
     {
     case 0:
-        /* if we got the lock, loop shall stop */
         pthread_mutex_unlock(&mtx);
         return 1;
     case EBUSY:
-        /* if locked, loop shall continue */
         return 0;
     }
     return 1;
-}
-
-int8_t compareDates(struct tm *a, struct tm *b)
-{
-    int diff = 0;
-
-    diff = b->tm_year - a->tm_year;
-    if (diff != 0)
-        goto end;
-
-    diff = b->tm_mon - a->tm_mon;
-    if (diff != 0)
-        goto end;
-
-    diff = b->tm_mday - a->tm_mday;
-
-end:
-    return diff;
 }
 
 void *timings_loop(void *ptr)
@@ -58,18 +37,10 @@ void *timings_loop(void *ptr)
     port = args->port;
     broadcast = args->broadcast;
 
-    int last_yday = -1;
-
     while (!needQuit())
     {
         time_t now_epoch = time(NULL);
         struct tm *dt = localtime(&now_epoch);
-
-        if (dt->tm_yday != last_yday)
-        {
-            PARA_LOOP(i) { port->pins[i]->today_dirty = true; }
-            last_yday = dt->tm_yday;
-        }
 
         if (dt->tm_sec != 0)
         {
@@ -78,20 +49,19 @@ void *timings_loop(void *ptr)
         }
 
         int key = dt->tm_hour * 60 + dt->tm_min;
+        uint8_t mon = dt->tm_mon + 1;
+        uint8_t day = dt->tm_mday;
 
         PARA_LOOP(i)
         {
             Pin *p = port->pins[i];
 
-            if (p->today_dirty)
-                build_index(p, dt);
-
-            int lo = 0, hi = (int)p->today_count - 1;
+            int lo = 0, hi = (int)p->timings_count - 1;
             int found = -1;
             while (lo <= hi)
             {
                 int mid = lo + (hi - lo) / 2;
-                int mk = p->today[mid]->hour * 60 + p->today[mid]->minute;
+                int mk = p->timings[mid]->hour * 60 + p->timings[mid]->minute;
                 if (mk < key)
                     lo = mid + 1;
                 else if (mk > key)
@@ -107,22 +77,27 @@ void *timings_loop(void *ptr)
                 continue;
 
             int start = found;
-            while (start > 0 &&
-                   p->today[start - 1]->hour * 60 +
-                           p->today[start - 1]->minute ==
-                       key)
+            while (start > 0 && p->timings[start - 1]->hour * 60 +
+                                        p->timings[start - 1]->minute ==
+                                    key)
                 start--;
 
             int end = found;
-            while (end < (int)p->today_count - 1 &&
-                   p->today[end + 1]->hour * 60 +
-                           p->today[end + 1]->minute ==
+            while (end < (int)p->timings_count - 1 &&
+                   p->timings[end + 1]->hour * 60 +
+                           p->timings[end + 1]->minute ==
                        key)
                 end++;
 
             for (int j = start; j <= end; j++)
             {
-                Timing *t = p->today[j];
+                Timing *t = p->timings[j];
+
+                if (!date_in_range(mon, day, t->range.first_month,
+                                   t->range.first_day, t->range.last_month,
+                                   t->range.last_day))
+                    continue;
+
                 set_state(p, t->state);
 
                 char data[MAX_PORT_SIZE];
