@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.16)
 
 project(pportd LANGUAGES C VERSION 2.0.0)
 
-option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
-
 if(NOT UNIX OR NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
     message(FATAL_ERROR "This program can only be compiled on Linux.")
 endif()

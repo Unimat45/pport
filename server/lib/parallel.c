@@ -72,12 +72,7 @@ Parallel *init_port(void)
         port->pins[i] = p;
     }
 
-#ifdef NDEBUG
-    uint8_t value = 0;
-    PARA_LOOP(i) { value |= (1 << i) * port->pins[i]->state; }
-
-    outb(value, PPORT);
-#endif
+    apply_value(port);
 
     return port;
 
@@ -249,6 +244,16 @@ size_t next_timing(Pin *pin)
     }
 
     return pin->timings_count;
+}
+
+void apply_value(Parallel *port)
+{
+#ifdef NDEBUG
+    uint8_t value = 0;
+    PARA_LOOP(i) { value |= (1 << i) * port->pins[i]->state; }
+
+    outb(value, PPORT);
+#endif
 }
 
 size_t serialize_pin(Pin *p, void *restrict data)

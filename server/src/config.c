@@ -40,7 +40,8 @@ int config_load(Parallel *port)
     uint8_t version = *buf;
 
     // Version 1 starts directly with the pins, no header
-    if (version > 1) {
+    if (version > 1)
+    {
         buf++;
         port->enabled_pins = *buf++;
     }
@@ -67,7 +68,6 @@ int config_load(Parallel *port)
             t.minute = *buf++;
             t.state = *buf++;
 
-
             add_timing(p, &t);
         }
         buf += 2;
@@ -75,15 +75,9 @@ int config_load(Parallel *port)
 
     free(start);
 
+    apply_value(port);
+
     return 1;
-}
-
-uint8_t calculate_value(Parallel *port)
-{
-    uint8_t value = 0;
-    PARA_LOOP(i) { value |= (1 << i) * port->pins[i]->state; }
-
-    return value;
 }
 
 void config_dump(Parallel *port)
@@ -103,9 +97,5 @@ void config_dump(Parallel *port)
 
     fclose(fd);
 
-    uint8_t value = calculate_value(port);
-
-#ifdef NDEBUG
-    outb(value, PPORT);
-#endif
+    apply_value(port);
 }

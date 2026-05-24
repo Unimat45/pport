@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.16)
 
 project(pport LANGUAGES C VERSION 2.0.0)
 
-option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
-
 # 1. Platform Check (Independent of Build Type)
 if(NOT UNIX OR NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
     message(FATAL_ERROR "This library currently only supports Linux.")
@@ -33,10 +31,12 @@ if(PORT_ENABLE_LOGGING)
     target_compile_definitions(${PROJECT_NAME} PRIVATE LOG)
 endif()
 
+include(GNUInstallDirs)
+
 # 7. Modern Include Management
 target_include_directories(${PROJECT_NAME}
     PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
@@ -50,7 +50,6 @@ include(GenerateExportHeader)
 generate_export_header(${PROJECT_NAME})
 
 # 9. Installation
-include(GNUInstallDirs)
 install(TARGETS ${PROJECT_NAME}
     EXPORT ${PROJECT_NAME}-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

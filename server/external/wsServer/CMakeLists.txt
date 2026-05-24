@@ -27,34 +27,52 @@ add_library(ws
     src/utf8.c
 )
 
-target_include_directories(ws PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+include(GNUInstallDirs)
+
+target_include_directories(ws
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+install(TARGETS ws
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/ws.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
 
 if(WIN32)
-	target_link_libraries(ws pthread ws2_32 -static)
+    target_link_libraries(ws pthread ws2_32 -static)
 else()
-	target_link_libraries(ws pthread)
+    target_link_libraries(ws pthread)
 endif(WIN32)
-
-add_executable(toyws_test
-    extra/toyws/tws_test.c
-    extra/toyws/toyws.c)
-
-if(WIN32)
-    target_link_libraries(toyws_test ws2_32 -static)
-endif(WIN32)
-
-# Examples files
-add_subdirectory(examples)
 
 option(ENABLE_WSSERVER_TEST "Enable wsServer testing (requires Autobahn)" OFF)
+
 if(ENABLE_WSSERVER_TEST)
-	enable_testing()
-	# Disable verbose output of echo
-	target_compile_definitions(echo PRIVATE DISABLE_VERBOSE)
-	add_subdirectory(tests)
+    add_executable(toyws_test
+        extra/toyws/tws_test.c
+        extra/toyws/toyws.c)
+
+    if(WIN32)
+        target_link_libraries(toyws_test ws2_32 -static)
+    endif(WIN32)
+
+    # Examples files
+    add_subdirectory(examples)
+
+    enable_testing()
+
+    # Disable verbose output of echo
+    target_compile_definitions(echo PRIVATE DISABLE_VERBOSE)
+    add_subdirectory(tests)
 endif(ENABLE_WSSERVER_TEST)
 
 option(VALIDATE_UTF8 "Enable UTF-8 validation (default ON)" ON)
+
 if(VALIDATE_UTF8)
-	target_compile_definitions(ws PRIVATE VALIDATE_UTF8)
+    target_compile_definitions(ws PRIVATE VALIDATE_UTF8)
 endif(VALIDATE_UTF8)

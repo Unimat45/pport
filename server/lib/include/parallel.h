@@ -60,6 +60,7 @@ PPORT_EXPORT void add_timing(Pin *pin, Timing *timing);
 PPORT_EXPORT void remove_timing(Pin *pin, Timing *timing);
 PPORT_EXPORT void remove_all_timings(Pin *pin);
 PPORT_EXPORT size_t next_timing(Pin *pin);
+PPORT_EXPORT void apply_value(Parallel *port);
 
 PPORT_EXPORT bool date_in_range(uint8_t mon, uint8_t day, uint8_t f_mon,
                                 uint8_t f_day, uint8_t l_mon, uint8_t l_day);
